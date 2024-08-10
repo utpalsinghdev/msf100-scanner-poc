@@ -46,29 +46,27 @@ function MatchFinger(quality: any, timeout: any, GalleryFMR: any) {
 }
 
 
-function PostMFS100Client(method: string, jsonData: string) {
-    var res;
-    $.support.cors = true;
-    var httpStaus = false;
-    $.ajax({
-        type: "POST",
-        async: false,
-        crossDomain: true,
-        url: uri + method,
-        contentType: "application/json; charset=utf-8",
-        data: jsonData,
-        dataType: "json",
-        processData: false,
-        success: function (data: any) {
-            httpStaus = true;
-            res = { httpStaus: httpStaus, data: data };
-        },
-        error: function (jqXHR: any, _ajaxOptions: any, _thrownError: any) {
-            res = { httpStaus: httpStaus, err: getHttpError(jqXHR) };
-        },
-    });
-    return res;
+async function PostMFS100Client(method: string, jsonData: string) {
+    try {
+        const response = await fetch(`${uri}${method}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: jsonData,
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        return { httpStatus: true, data };
+    } catch (error: any) {
+        return { httpStatus: false, err: error.message };
+    }
 }
+
 function GetMFS100Client(method: string) {
     var res;
     $.support.cors = true;
