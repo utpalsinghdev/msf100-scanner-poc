@@ -7,9 +7,9 @@ import { CaptureFinger } from './utiles/scanner'
 function App() {
 
   const [fingImg, setFingimg] = useState("")
-  function getFingerPrint() {
+  async function getFingerPrint() {
     //@ts-ignore
-    const fprint = new CaptureFinger(1, 5000)
+    const fprint = await new CaptureFinger(1, 5000)
     setFingimg(fprint.data.BitmapData)
     console.log(fprint)
   }
