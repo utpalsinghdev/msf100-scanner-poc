@@ -1,6 +1,60 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState } from 'react'
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable no-extra-boolean-cast */
+import { createBrowserRouter, RouterProvider, Navigate, Outlet } from "react-router-dom";
+import Navbar from "./components/Navbar"
+import { lazy } from "react";
+
+const isAuth = localStorage.getItem("scanner_user");
+
+const key = JSON.parse(localStorage.getItem("scanner_user") ?? "{}");
+
+const ProtectedRoutes = () => {
+  return !!isAuth ? <Outlet /> : <Navigate to={"/login"} />;
+};
+
+//Pages 
+const Home = lazy(() => import("@/pages/Home"));
+const Login = lazy(() => import("@/pages/Login"));
+
+const Layout = () => {
+  return (
+    <>
+      <Navbar />
+      <div
+        className="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8"
+      >
+        <Outlet />
+      </div>
+    </>
+  )
+}
+
+function App() {
+
+  const routes = createBrowserRouter([
+    {
+      path: "/login",
+      element: <Login />
+    },
+    {
+      path: "/",
+      element: <Layout />,
+      children: [{
+        path: "/",
+        element: <Home />
+      }]
+    }
+  ])
+  return <RouterProvider router={routes} />;
+}
+
+export default App
+
+
+/**
+ * ? Legacy Code - Demo Purpose
+ * 
+ * import { useState } from 'react'
 import DashboardLayout from './components/DashboardLayout'
 import { CaptureFinger } from './utiles/scanner'
 
@@ -28,5 +82,4 @@ function App() {
     </DashboardLayout>
   )
 }
-
-export default App
+ */
