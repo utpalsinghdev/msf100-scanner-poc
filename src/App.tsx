@@ -15,13 +15,14 @@ const ProtectedRoutes = () => {
 //Pages 
 const Home = lazy(() => import("@/pages/Home"));
 const Login = lazy(() => import("@/pages/Login"));
+const Batch = lazy(() => import("@/pages/Batch"));
 
 const Layout = () => {
   return (
     <>
       <Navbar />
       <div
-        className="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8"
+        className="mx-auto max-w-7xl px-2 sm:px-6 py-4 lg:px-8"
       >
         <Outlet />
       </div>
@@ -39,10 +40,16 @@ function App() {
     {
       path: "/",
       element: <Layout />,
-      children: [{
-        path: "/",
-        element: <Home />
-      }]
+      children: [
+        {
+          path: "/",
+          element: <Home />
+        },
+        {
+          path: "/batch",
+          element: <Batch />
+        },
+      ]
     }
   ])
   return <RouterProvider router={routes} />;
