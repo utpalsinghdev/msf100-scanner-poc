@@ -1,4 +1,28 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable no-extra-boolean-cast */
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Formik } from "formik";
+import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { toast } from "react-hot-toast";
+import axios from "axios";
 export default function Login() {
+    const navigator = useNavigate();
+    let user = {};
+    useEffect(() => {
+        if (!!localStorage.getItem("scanner_user")) {
+            user = JSON?.parse(localStorage.getItem("scanner_user") ?? "") || {};
+        }
+    }, [localStorage.getItem("scanner_user")]);
+    useEffect(() => {
+        if (!!localStorage.getItem("scanner_user")) {
+            const user = JSON?.parse(localStorage.getItem("scanner_user") ?? "") || {};
+
+            navigator("/home");
+        }
+    }, [user]);
     return (
         <div className="h-screen">
             <div className="flex min-h-full flex-1 flex-col justify-center py-12 sm:px-6 lg:px-8">
@@ -15,51 +39,77 @@ export default function Login() {
 
                 <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-[480px]">
                     <div className="bg-white px-6 py-12 shadow sm:rounded-lg sm:px-12">
-                        <form action="#" method="POST" className="space-y-6">
-                            <div>
-                                <label htmlFor="email" className="block text-sm font-medium leading-6 text-gray-900">
-                                    Email address
-                                </label>
-                                <div className="mt-2">
-                                    <input
-                                        id="email"
-                                        name="email"
-                                        type="email"
-                                        required
-                                        autoComplete="email"
-                                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                                    />
-                                </div>
-                            </div>
+                        <Formik
+                            // validationSchema={adminLoginDto}
+                            initialValues={{
+                                Id: "",
+                                password: "",
+                            }}
+                            onSubmit={async (values, action) => {
+                                try {
+                                    const res = await axios.post(
+                                        `${import.meta.env.VITE_BASE_URL}/api/auth/admin`,
+                                        values
+                                    );
+                                    if (res) {
+                                        localStorage.setItem("royal_user", JSON.stringify(res.data.data));
+                                        toast.success(res.data.message);
+                                        window.location.reload();
+                                    }
+                                } catch (error: any) {
+                                    toast.error(error.response.data.message);
+                                } finally {
+                                    // action.resetForm();
+                                    action.setSubmitting(false);
+                                }
+                            }}
+                        >
+                            {(formik) => (
+                                <form onSubmit={formik.handleSubmit} className="space-y-6">
+                                    <div>
+                                        <label htmlFor="email" className="block text-sm font-medium leading-6 text-gray-900">
+                                            Email address
+                                        </label>
+                                        <Input
+                                            name="Id"
+                                            type="text"
+                                            placeholder="ID"
+                                            value={formik.values.Id}
+                                            onBlur={formik.handleBlur}
+                                            onChange={formik.handleChange}
 
-                            <div>
-                                <label htmlFor="password" className="block text-sm font-medium leading-6 text-gray-900">
-                                    Password
-                                </label>
-                                <div className="mt-2">
-                                    <input
-                                        id="password"
-                                        name="password"
-                                        type="password"
-                                        required
-                                        autoComplete="current-password"
-                                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                                    />
-                                </div>
-                            </div>
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label htmlFor="password" className="block text-sm font-medium leading-6 text-gray-900">
+                                            Password
+                                        </label>
+                                        <Input
+                                            name="password"
+                                            label=""
+                                            type="password"
+                                            placeholder="Password"
+                                            value={formik.values.password}
+                                            onBlur={formik.handleBlur}
+                                            onChange={formik.handleChange}
+                                        />
+                                    </div>
 
 
 
-                            <div>
-                                <button
-                                    type="submit"
-                                    className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                                >
-                                    Sign in
-                                </button>
-                            </div>
-                        </form>
-
+                                    <div>
+                                        <Button
+                                            disabled={formik.isSubmitting}
+                                            size={"lg"}
+                                            className="w-full"
+                                            type="submit"
+                                        >
+                                            Sign in
+                                        </Button>
+                                    </div>
+                                </form>
+                            )}</Formik>
 
                     </div>
 

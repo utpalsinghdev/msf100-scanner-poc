@@ -103,26 +103,7 @@ function Table({
     usePagination // new
   );
 
-
-  //   const pageArray = pageOptions;
-
-  //   // Render the UI for your table
-
-  //   const [isMobiled, setIsMobile] = useState(false);
   const isMobile = true;
-
-  //   useEffect(() => {
-  //     const handleResize = () => {
-  //       setIsMobile(window.innerWidth >= 710);
-  //     };
-
-  //     window.addEventListener("resize", handleResize);
-  //     handleResize();
-
-  //     return () => {
-  //       window.removeEventListener("resize", handleResize);
-  //     };
-  //   }, []);
 
   return (
     <div className="text-left  bg-white rounded-md border overflow-hidden">
