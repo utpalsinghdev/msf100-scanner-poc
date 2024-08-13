@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { CornerUpLeft, Fingerprint } from "lucide-react"
 import { toast } from "react-hot-toast"
 import { useEffect, useState } from 'react';
-import { Formik, FormikHandlers, FormikProps, FormikValues } from 'formik';
+import { Formik } from 'formik';
 import Api from '@/lib/api';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -39,7 +39,7 @@ const AddStudent = () => {
     async function fetchStudent() {
         try {
             const res = await Api.get(`api/student/${event}`)
-            setFormState(prev => ({
+            setFormState(() => ({
                 ...res.data.data
             }))
 

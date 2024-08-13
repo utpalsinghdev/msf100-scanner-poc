@@ -18,7 +18,6 @@ export default function Login() {
     }, [localStorage.getItem("scanner_user")]);
     useEffect(() => {
         if (!!localStorage.getItem("scanner_user")) {
-            const user = JSON?.parse(localStorage.getItem("scanner_user") ?? "") || {};
 
             navigator("/");
         }
