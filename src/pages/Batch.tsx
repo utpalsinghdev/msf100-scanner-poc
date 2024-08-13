@@ -118,6 +118,10 @@ const Batch = () => {
             accessor: "name",
         },
         {
+            Header: "no of students",
+            accessor: "_count.students",
+        },
+        {
             Header: "Action",
             accessor: "action",
             Cell: (cell: any) => (

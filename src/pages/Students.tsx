@@ -54,38 +54,42 @@ const Students = () => {
             accessor: "name",
         },
         {
+            Header: "batch",
+            accessor: "batch.name",
+        },
+        {
             Header: "finger1",
             accessor: "finger1",
             Cell: (cell: any) => (
-                <img src={`data:image/png;base64,${cell.row.original.finger1}`} className="w-12" alt='inf' />
+                <img draggable={false} src={`data:image/png;base64,${cell.row.original.finger1}`} className="w-12" alt='inf' />
             )
         },
         {
             Header: "finger2",
             accessor: "finger2",
             Cell: (cell: any) => (
-                <img src={`data:image/png;base64,${cell.row.original.finger2}`} className="w-12" alt='inf' />
+                <img draggable={false} src={`data:image/png;base64,${cell.row.original.finger2}`} className="w-12" alt='inf' />
             )
         },
         {
             Header: "finger3",
             accessor: "finger3",
             Cell: (cell: any) => (
-                <img src={`data:image/png;base64,${cell.row.original.finger3}`} className="w-12" alt='inf' />
+                <img draggable={false} src={`data:image/png;base64,${cell.row.original.finger3}`} className="w-12" alt='inf' />
             )
         },
         {
             Header: "finger4",
             accessor: "finger4",
             Cell: (cell: any) => (
-                <img src={`data:image/png;base64,${cell.row.original.finger4}`} className="w-12" alt='inf' />
+                <img draggable={false} src={`data:image/png;base64,${cell.row.original.finger4}`} className="w-12" alt='inf' />
             )
         },
         {
             Header: "finger5",
             accessor: "finger5",
             Cell: (cell: any) => (
-                <img src={`data:image/png;base64,${cell.row.original.finger5}`} className="w-12" alt='inf' />
+                <img draggable={false} src={`data:image/png;base64,${cell.row.original.finger5}`} className="w-12" alt='inf' />
             )
         },
         {

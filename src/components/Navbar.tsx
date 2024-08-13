@@ -1,10 +1,11 @@
 import { cn } from '@/lib/utils';
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
 import { Bars3Icon, BellIcon, XMarkIcon } from '@heroicons/react/24/outline'
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 export default function Navbar() {
     const location = useLocation()
+    const navigate = useNavigate()
     const isActive = (url: string) => {
         return location.pathname.split("/")[1] === url.split("/")[1];
     };
@@ -82,20 +83,16 @@ export default function Navbar() {
                                 transition
                                 className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 transition focus:outline-none data-[closed]:scale-95 data-[closed]:transform data-[closed]:opacity-0 data-[enter]:duration-200 data-[leave]:duration-75 data-[enter]:ease-out data-[leave]:ease-in"
                             >
+
                                 <MenuItem>
-                                    <a href="#" className="block px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100">
-                                        Your Profile
-                                    </a>
-                                </MenuItem>
-                                <MenuItem>
-                                    <a href="#" className="block px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100">
-                                        Settings
-                                    </a>
-                                </MenuItem>
-                                <MenuItem>
-                                    <a href="#" className="block px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100">
+                                    <button
+                                        onClick={() => {
+                                            localStorage.removeItem("scanner_user")
+                                            window.location.reload()
+                                        }}
+                                        type='button' className="block px-4 w-full font-medium py-2 text-sm text-gray-700 data-[focus]:bg-gray-100">
                                         Sign out
-                                    </a>
+                                    </button>
                                 </MenuItem>
                             </MenuItems>
                         </Menu>
@@ -105,35 +102,19 @@ export default function Navbar() {
 
             <DisclosurePanel className="sm:hidden">
                 <div className="space-y-1 pb-4 pt-2">
-                    {/* Current: "bg-indigo-50 border-indigo-500 text-indigo-700", Default: "border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700" */}
-                    <DisclosureButton
-                        as="a"
-                        href="#"
-                        className="block border-l-4 border-indigo-500 bg-indigo-50 py-2 pl-3 pr-4 text-base font-medium text-indigo-700"
-                    >
-                        Dashboard
-                    </DisclosureButton>
-                    <DisclosureButton
-                        as="a"
-                        href="#"
-                        className="block border-l-4 border-transparent py-2 pl-3 pr-4 text-base font-medium text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700"
-                    >
-                        Team
-                    </DisclosureButton>
-                    <DisclosureButton
-                        as="a"
-                        href="#"
-                        className="block border-l-4 border-transparent py-2 pl-3 pr-4 text-base font-medium text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700"
-                    >
-                        Projects
-                    </DisclosureButton>
-                    <DisclosureButton
-                        as="a"
-                        href="#"
-                        className="block border-l-4 border-transparent py-2 pl-3 pr-4 text-base font-medium text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700"
-                    >
-                        Calendar
-                    </DisclosureButton>
+                    {/* Current: "bg-indigo-50 border-indigo-500 text-indigo-700", Default: "" */}
+                    {navs.map(n => (
+                        <DisclosureButton
+                            onClick={() => {
+                                navigate(n.hrf)
+                            }}
+                            as="button"
+                            className={cn("block border-l-4   py-2 pl-3 pr-4 text-base font-medium w-full", isActive(n.hrf) ? "bg-indigo-50 border-indigo-500 text-indigo-700" : "border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700")}
+                        >
+                            {n.title}
+                        </DisclosureButton>
+                    ))}
+
                 </div>
             </DisclosurePanel>
         </Disclosure>

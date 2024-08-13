@@ -65,12 +65,12 @@ export default function Login() {
                                 <form onSubmit={formik.handleSubmit} className="space-y-6">
                                     <div>
                                         <label htmlFor="email" className="block text-sm font-medium leading-6 text-gray-900">
-                                            Email address
+                                            ID
                                         </label>
                                         <Input
                                             name="email"
                                             type="text"
-                                            placeholder="email"
+                                            placeholder="ID"
                                             value={formik.values.email}
                                             onBlur={formik.handleBlur}
                                             onChange={formik.handleChange}
