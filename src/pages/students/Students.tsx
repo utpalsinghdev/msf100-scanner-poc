@@ -99,6 +99,11 @@ const Students = () => {
             Cell: (cell: any) => (
                 <span className="flex items-center justify-start gap-4">
                     <Badge onClick={() => {
+                        navigate(`/view-student/${cell.row.original.id}`)
+                    }} type={enums.BLUE}>
+                        View
+                    </Badge>
+                    <Badge onClick={() => {
                         navigate(`/student/${cell.row.original.id}`)
                     }} type={enums.GREEN}>
                         Edit

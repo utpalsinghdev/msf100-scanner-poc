@@ -3,6 +3,7 @@ import { NewspaperIcon } from "@heroicons/react/24/outline";
 import Loader from "@/components/ui/Loader";
 import { useEffect, useState } from "react";
 import Api from "@/lib/api";
+import { useNavigate } from "react-router-dom";
 
 function DashboardHome() {
     const [_dashboard, setDashboard] = useState({
@@ -24,6 +25,7 @@ function DashboardHome() {
         das()
     }, [])
 
+    const navigate = useNavigate()
 
     return _dashboard.loading ? (
         <Loader />
@@ -32,14 +34,22 @@ function DashboardHome() {
             <img src={"/3556960.jpg"} className="w-[600px]" />
 
             <div className="w-full h-full flex flex-col gap-4 mx-4">
-                <div className="w-full flex rounded-md shadow-md px-8 py-6 bg-blue-100 border border-blue-700 items-center justify-between">
+                <div
+                    onClick={() => {
+                        navigate("/student")
+                    }}
+                    className="w-full cursor-pointer flex rounded-md shadow-md px-8 py-6 bg-blue-100 border border-blue-700 items-center justify-between">
                     <span className="flex items-start gap-4 justify-between flex-col">
                         <p className="text-start">Total Students</p>
                         <p className="text-start">{_dashboard?.data?.students}</p>
                     </span>
                     <Users2Icon className="w-16 h-16" />
                 </div>
-                <div className="w-full flex rounded-md shadow-md px-8 py-6 bg-blue-100 border border-blue-700 items-center justify-between">
+                <div
+                    onClick={() => {
+                        navigate("/batch")
+                    }}
+                    className="w-full cursor-pointer flex rounded-md shadow-md px-8 py-6 bg-blue-100 border border-blue-700 items-center justify-between">
                     <span className="flex items-start gap-4 justify-between flex-col">
                         <p className="text-start">Total Batches</p>
                         <p className="text-start">{_dashboard?.data?.batches}</p>
@@ -47,7 +57,11 @@ function DashboardHome() {
                     <NewspaperIcon className="w-16 h-16" />
                 </div>
 
-                <div className="w-full flex rounded-md shadow-md px-8 py-6 bg-blue-100 border border-blue-700 items-center justify-between">
+                <div
+                    onClick={() => {
+                        navigate("/batch")
+                    }}
+                    className="w-full cursor-pointer flex rounded-md shadow-md px-8 py-6 bg-blue-100 border border-blue-700 items-center justify-between">
                     <span className="flex items-start gap-4 justify-between flex-col">
                         <p className="text-start">Remaining Batches</p>
                         <p className="text-start">{20 - _dashboard?.data?.batches}</p>
