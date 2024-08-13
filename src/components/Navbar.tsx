@@ -54,6 +54,13 @@ export default function Navbar() {
                                     {n.title}
                                 </Link>
                             ))}
+                            <a
+                                href={"/MFS100Driver_9.1.1.0andClientService9.0.3.8.zip"}
+                                download={true}
+                                className={cn("inline-flex items-center   px-1 pt-1 text-sm font-medium ")}
+                            >
+                                Download Drivers
+                            </a>
                         </div>
                     </div>
                     <div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
@@ -114,6 +121,15 @@ export default function Navbar() {
                             {n.title}
                         </DisclosureButton>
                     ))}
+                    <DisclosureButton
+                        as="a"
+                        href={"/MFS100Driver_9.1.1.0andClientService9.0.3.8.zip"}
+                        download={true}
+                        className={cn("block border-l-4 text-center  py-2 pl-3 pr-4 text-base font-medium w-full")}
+                    >
+                        Download Drivers
+                    </DisclosureButton>
+
 
                 </div>
             </DisclosurePanel>
