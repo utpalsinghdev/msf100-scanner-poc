@@ -51,7 +51,7 @@ function GlobalFilter({
         <MagnifyingGlassIcon className="w-5 h-5 text-gray-400" />
         <input
           type="text"
-          className="border-none flex-1 outline-none focus:outline-none focus:border-none w-40 focus:ring-0 focus:ring-opacity-50 sm:w-60 md:w-80 lg:w-96 xl:w-96 2xl:w-96"
+          className="border-none flex-1 py-2 outline-none focus:outline-none focus:border-none w-40 focus:ring-0 focus:ring-opacity-50 sm:w-60 md:w-80 lg:w-96 xl:w-96 2xl:w-96"
           value={value || ""}
           onChange={(e) => {
             setValue(e.target.value);
@@ -170,7 +170,7 @@ function Table({
                             <th
                               key={column}
                               scope="col"
-                              className={`group px-6 py-3 border border-white bg-red-500 text-left text-xs font-medium text-white uppercase tracking-wider `}
+                              className={`group px-6 py-3 border border-white bg-gray-500 text-left text-xs font-medium text-white uppercase tracking-wider `}
                               {...column.getHeaderProps(
                                 column.getSortByToggleProps()
                               )}
@@ -215,7 +215,7 @@ function Table({
                               <td
                                 key={cell}
                                 {...cell.getCellProps()}
-                                className="px-6 py-4 bg-gray-500  border border-white text-sm text-white"
+                                className="px-6 py-4 bg-gray-100  border border-white text-sm text-black"
                                 role="cell"
                               >
                                 {cell.column.Cell.name === "defaultRenderer" ? (
