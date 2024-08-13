@@ -5,7 +5,7 @@ import Modal from "@/components/ui/Modal";
 import Table from "@/components/ui/Table"
 import Api from "@/lib/api";
 import { Formik } from "formik";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
 const initialModalState = {
@@ -23,6 +23,32 @@ const Batch = () => {
         data: [],
     });
 
+    async function fetchData() {
+        setNews(prev => ({
+            ...prev,
+            loading: true
+        }))
+        try {
+            const res: any = await Api.get("api/batch")
+            setNews(prev => ({
+                ...prev,
+                data: res.data.data
+            }))
+        } catch (error) {
+
+        } finally {
+            setNews(prev => ({
+                ...prev,
+                loading: false
+            }))
+        }
+    }
+
+    useEffect(() => {
+        fetchData()
+    }, [])
+
+
     function renderModal() {
         const { state, edit_id, data } = modal;
 
@@ -38,17 +64,12 @@ const Batch = () => {
 
                         try {
                             if (edit_id) {
-                                const res = await Api.patch(`api/investment/${edit_id}`, values);
+                                const res = await Api.patch(`api/batch/${edit_id}`, values);
                                 if (res) toast.success(res.data.message);
-                                setNews((prev: any) => ({
-                                    ...prev,
-                                    data: prev.data?.map((n: any) =>
-                                        n.id === +edit_id ? res.data.data : n
-                                    ),
-                                }));
+                                fetchData()
                                 setModal(initialModalState);
                             } else {
-                                const res = await Api.post(`api/investment`, values);
+                                const res = await Api.post(`api/batch`, values);
                                 if (res) toast.success(res.data.message);
                                 setNews((prev: any) => ({
                                     ...prev,
@@ -89,7 +110,7 @@ const Batch = () => {
             Header: "Sr.No",
             accessor: "d",
             Cell: (cell: any) => (
-                cell.row.index
+                cell.row.index + 1
             )
         },
         {
@@ -116,7 +137,7 @@ const Batch = () => {
                             const confirm = window.confirm("Are you sure you want to delete this?");
                             try {
                                 if (confirm) {
-                                    const res = await Api.delete(`api/investment/${cell.row.original.id}`);
+                                    const res = await Api.delete(`api/batch/${cell.row.original.id}`);
                                     if (res) toast.success(res.data.message);
                                     setNews((prev: any) => ({
                                         ...prev,
