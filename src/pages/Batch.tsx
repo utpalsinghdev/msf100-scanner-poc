@@ -28,7 +28,7 @@ const Batch = () => {
 
         return (
             <Modal
-                title="Add Investment"
+                title="Add Batch"
                 open={state}
                 setOpen={() => setModal(initialModalState)}
             >
@@ -69,11 +69,7 @@ const Batch = () => {
                             onSubmit={formik.handleSubmit}
                             className="w-full pt-4 rounded-b-md pb-8 flex flex-col gap-4 px-4 bg-white"
                         >
-
-
                             <Input name="name" label="Name" placeholder="Batch name" type="text" required onChange={formik.handleChange} value={formik.values.name} />
-
-
                             <Button
                                 disabled={formik.isSubmitting}
                                 size={"lg"}
@@ -143,7 +139,7 @@ const Batch = () => {
     ];
 
     return <>
-
+        {renderModal()}
         <Table
             btnText={"Add Batch"}
             btnfunc={() =>

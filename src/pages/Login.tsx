@@ -20,7 +20,7 @@ export default function Login() {
         if (!!localStorage.getItem("scanner_user")) {
             const user = JSON?.parse(localStorage.getItem("scanner_user") ?? "") || {};
 
-            navigator("/home");
+            navigator("/");
         }
     }, [user]);
     return (
@@ -40,9 +40,8 @@ export default function Login() {
                 <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-[480px]">
                     <div className="bg-white px-6 py-12 shadow sm:rounded-lg sm:px-12">
                         <Formik
-                            // validationSchema={adminLoginDto}
                             initialValues={{
-                                Id: "",
+                                email: "",
                                 password: "",
                             }}
                             onSubmit={async (values, action) => {
@@ -52,14 +51,13 @@ export default function Login() {
                                         values
                                     );
                                     if (res) {
-                                        localStorage.setItem("royal_user", JSON.stringify(res.data.data));
+                                        localStorage.setItem("scanner_user", JSON.stringify(res.data.data));
                                         toast.success(res.data.message);
                                         window.location.reload();
                                     }
                                 } catch (error: any) {
                                     toast.error(error.response.data.message);
                                 } finally {
-                                    // action.resetForm();
                                     action.setSubmitting(false);
                                 }
                             }}
@@ -71,10 +69,10 @@ export default function Login() {
                                             Email address
                                         </label>
                                         <Input
-                                            name="Id"
+                                            name="email"
                                             type="text"
-                                            placeholder="ID"
-                                            value={formik.values.Id}
+                                            placeholder="email"
+                                            value={formik.values.email}
                                             onBlur={formik.handleBlur}
                                             onChange={formik.handleChange}
 

@@ -39,18 +39,25 @@ function App() {
     },
     {
       path: "/",
-      element: <Layout />,
+      element: <ProtectedRoutes />,
       children: [
         {
           path: "/",
-          element: <Home />
-        },
-        {
-          path: "/batch",
-          element: <Batch />
-        },
+          element: <Layout />,
+          children: [
+            {
+              path: "/",
+              element: <Home />
+            },
+            {
+              path: "/batch",
+              element: <Batch />
+            },
+          ]
+        }
       ]
-    }
+    },
+
   ])
   return <RouterProvider router={routes} />;
 }
