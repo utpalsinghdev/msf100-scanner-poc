@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button'
 import { useNavigate, useParams } from 'react-router-dom'
 import { CornerUpLeft, Fingerprint } from "lucide-react"
 import { toast } from "react-hot-toast"
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Formik, FormikHandlers, FormikProps, FormikValues } from 'formik';
 import Api from '@/lib/api';
 import { Input } from '@/components/ui/input';
@@ -36,6 +36,26 @@ const AddStudent = () => {
         }
     }
 
+    async function fetchStudent() {
+        try {
+            const res = await Api.get(`api/student/${event}`)
+            setFormState(prev => ({
+                ...res.data.data
+            }))
+
+        } catch (error) {
+            toast.error("Student Not found")
+            navigate(-1)
+        }
+    }
+
+    useEffect(() => {
+        if (event !== "add") {
+            fetchStudent()
+        }
+    }, [event])
+
+
     return (
         <div>
             <h2
@@ -48,7 +68,6 @@ const AddStudent = () => {
                         navigate(-1)
                     }}
                 >
-
                     <CornerUpLeft />
                 </Button>    {event === "add" ? "Add" : "Edit"} Student
             </h2>
@@ -61,7 +80,7 @@ const AddStudent = () => {
 
                         try {
                             if (event !== "add") {
-                                const res = await Api.patch(`api/student/${event}`, values);
+                                const res = await Api.put(`api/student/${event}`, values);
                                 if (res) toast.success(res.data.message);
                                 navigate(-1)
                             } else {
@@ -91,7 +110,7 @@ const AddStudent = () => {
                                 {/* Fingers */}
 
                                 <div className='border border-black w-44 flex items-center flex-col gap-3 p-2 rounded-md'>
-                                    <Fingerprint width={104} height={104} />
+                                    {formik.values.finger1 ? <img src={`data:image/png;base64,${formik.values.finger1}`} alt='inf' /> : <Fingerprint width={104} height={104} />}
                                     <Button
                                         variant={"secondary"}
                                         type='button'
@@ -116,7 +135,8 @@ const AddStudent = () => {
                                     </Button>
                                 </div>
                                 <div className='border border-black w-44 flex items-center flex-col gap-3 p-2 rounded-md'>
-                                    <Fingerprint width={104} height={104} />
+                                    {formik.values.finger2 ? <img src={`data:image/png;base64,${formik.values.finger2}`} alt='inf' /> : <Fingerprint width={104} height={104} />}
+
                                     <Button
                                         variant={"secondary"}
                                         type='button'
@@ -141,7 +161,7 @@ const AddStudent = () => {
                                     </Button>
                                 </div>
                                 <div className='border border-black w-44 flex items-center flex-col gap-3 p-2 rounded-md'>
-                                    <Fingerprint width={104} height={104} />
+                                    {formik.values.finger3 ? <img src={`data:image/png;base64,${formik.values.finger3}`} alt='inf' /> : <Fingerprint width={104} height={104} />}
                                     <Button
                                         variant={"secondary"}
                                         type='button'
@@ -166,7 +186,7 @@ const AddStudent = () => {
                                     </Button>
                                 </div>
                                 <div className='border border-black w-44 flex items-center flex-col gap-3 p-2 rounded-md'>
-                                    <Fingerprint width={104} height={104} />
+                                    {formik.values.finger4 ? <img src={`data:image/png;base64,${formik.values.finger4}`} alt='inf' /> : <Fingerprint width={104} height={104} />}
                                     <Button
                                         variant={"secondary"}
                                         type='button'
@@ -191,7 +211,7 @@ const AddStudent = () => {
                                     </Button>
                                 </div>
                                 <div className='border border-black w-44 flex items-center flex-col gap-3 p-2 rounded-md'>
-                                    <Fingerprint width={104} height={104} />
+                                    {formik.values.finger5 ? <img src={`data:image/png;base64,${formik.values.finger5}`} alt='inf' /> : <Fingerprint width={104} height={104} />}
                                     <Button
                                         variant={"secondary"}
                                         type='button'
