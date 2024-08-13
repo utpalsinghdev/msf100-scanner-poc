@@ -24,10 +24,10 @@ function Select(props: any) {
           name={name}
           required={required}
           className={cn(
-            "block w-full rounded-md text-black border-0 py- pl-8  ring-1 ring-gray-300 ring-inset  ",
+            "block w-full rounded-md text-black border-0 py-2 pl-8  ring-1 ring-gray-300 ring-inset  ",
             error
               ? "ring-red-300  focus:ring-2 focus:ring-inset focus:ring-red-500"
-              : "ring-indigo-300  focus:ring-2 focus:ring-inset focus:ring-blue-500",
+              : "ring-gray-300  focus:ring-2 focus:ring-inset focus:ring-black",
             className
           )}
           {...rest}

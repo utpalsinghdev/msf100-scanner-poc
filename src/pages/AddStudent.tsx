@@ -9,10 +9,12 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { CaptureFinger } from '@/utiles/scanner'
+import Select from '@/components/ui/select';
 
 const initialState = {
     name: "",
     mobile: "",
+    batchId: "",
     address: "",
     finger1: "",
     finger2: "",
@@ -25,6 +27,36 @@ const AddStudent = () => {
     const { event } = useParams()
     const navigate = useNavigate()
     const [formState, setFormState] = useState(initialState)
+
+    const [news, setNews] = useState({
+        loading: true,
+        data: [],
+    });
+
+    async function fetchData() {
+        setNews(prev => ({
+            ...prev,
+            loading: true
+        }))
+        try {
+            const res: any = await Api.get("api/batch")
+            setNews(prev => ({
+                ...prev,
+                data: res.data.data
+            }))
+        } catch (error) {
+
+        } finally {
+            setNews(prev => ({
+                ...prev,
+                loading: false
+            }))
+        }
+    }
+
+    useEffect(() => {
+        fetchData()
+    }, [])
 
     async function getFingerPrint() {
         try {
@@ -103,6 +135,25 @@ const AddStudent = () => {
                         >
                             <Input name="name" label="Name" placeholder="Student name" type="text" required onChange={formik.handleChange} value={formik.values.name} />
                             <Input name="mobile" label="Phone Number" placeholder="+91 " type="text" required onChange={formik.handleChange} value={formik.values.mobile} />
+                            <Select
+                                name="batchId"
+                                label="Batch"
+                                onChange={formik.handleChange}
+                                required
+                            >
+                                <option
+                                >
+                                    Select Batch
+                                </option>
+                                {news.data.map((b: any) => (
+                                    <option
+                                        key={b.id}
+                                        value={b.id}
+                                    >
+                                        {b.name}
+                                    </option>
+                                ))}
+                            </Select>
                             <Textarea name="address" label="Address" placeholder="address " rows={4} required onChange={formik.handleChange} value={formik.values.address} />
                             <Label className='text-md font-bold'>Fingers</Label>
 
