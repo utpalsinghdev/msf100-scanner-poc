@@ -109,7 +109,7 @@ const AddStudent = () => {
                     initialValues={formState}
                     enableReinitialize
                     onSubmit={async (values: any, action: any) => {
-
+                        console.log(values.batchId)
                         try {
                             if (event !== "add") {
                                 const res = await Api.put(`api/student/${event}`, values);
@@ -139,6 +139,7 @@ const AddStudent = () => {
                                 name="batchId"
                                 label="Batch"
                                 onChange={formik.handleChange}
+                                value={formik.values.batchId}
                                 required
                             >
                                 <option
