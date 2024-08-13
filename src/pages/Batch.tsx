@@ -1,6 +1,7 @@
 import Badge, { enums } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import Loader from "@/components/ui/Loader";
 import Modal from "@/components/ui/Modal";
 import Table from "@/components/ui/Table"
 import Api from "@/lib/api";
@@ -165,7 +166,7 @@ const Batch = () => {
 
     return <>
         {renderModal()}
-        <Table
+        {news.loading ? <Loader /> : <Table
             btnText={"Add Batch"}
             btnfunc={() =>
                 setModal((prev) => ({
@@ -179,7 +180,7 @@ const Batch = () => {
             dataName={"Batchs"}
             data={news.data}
             columns={columns()}
-        />
+        />}
     </>
 }
 

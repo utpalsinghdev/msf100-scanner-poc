@@ -1,4 +1,5 @@
 import Badge, { enums } from "@/components/ui/Badge";
+import Loader from "@/components/ui/Loader";
 import Table from "@/components/ui/Table"
 import Api from "@/lib/api";
 import { useEffect, useState } from "react";
@@ -130,7 +131,7 @@ const Students = () => {
     ];
 
     return <>
-        <Table
+        {news.loading ? <Loader /> : <Table
             btnText={"Add Student"}
             btnfunc={() =>
                 navigate("/student/add")
@@ -140,7 +141,7 @@ const Students = () => {
             dataName={"students"}
             data={news.data}
             columns={columns()}
-        />
+        />}
     </>
 }
 
