@@ -6,8 +6,6 @@ import { lazy } from "react";
 
 const isAuth = localStorage.getItem("scanner_user");
 
-const key = JSON.parse(localStorage.getItem("scanner_user") ?? "{}");
-
 const ProtectedRoutes = () => {
   return !!isAuth ? <Outlet /> : <Navigate to={"/login"} />;
 };
@@ -16,6 +14,8 @@ const ProtectedRoutes = () => {
 const Home = lazy(() => import("@/pages/Home"));
 const Login = lazy(() => import("@/pages/Login"));
 const Batch = lazy(() => import("@/pages/Batch"));
+const Students = lazy(() => import("@/pages/Students"));
+const AddStudent = lazy(() => import("@/pages/AddStudent"));
 
 const Layout = () => {
   return (
@@ -52,6 +52,14 @@ function App() {
             {
               path: "/batch",
               element: <Batch />
+            },
+            {
+              path: "/student",
+              element: <Students />
+            },
+            {
+              path: "/student/:event",
+              element: <AddStudent />
             },
           ]
         }

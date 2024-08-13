@@ -15,7 +15,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, boxSize = "w-full", type, ...props }, ref) => {
     return (
       <div className={cn("flex flex-col items-start gap-1", boxSize)}>
-        <Label className="ml-1 flex flex-row gap-0 w-full">
+        <Label className="ml-1 flex flex-row font-bold text-md gap-0 w-full">
           {props.label}{" "}
         </Label>
         <input
