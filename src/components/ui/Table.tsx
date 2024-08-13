@@ -215,7 +215,7 @@ function Table({
                               <td
                                 key={cell}
                                 {...cell.getCellProps()}
-                                className="px-6 py-4 bg-gray-100  border border-white text-sm text-black"
+                                className="px-6 py-4 bg-gray-100  border border-white text-md font-medium text-black"
                                 role="cell"
                               >
                                 {cell.column.Cell.name === "defaultRenderer" ? (
