@@ -22,7 +22,7 @@ const Layout = () => {
     <>
       <Navbar />
       <div
-        className="mx-auto max-w-7xl px-2 sm:px-6 py-4 lg:px-8"
+        className="mx-auto max-w-[1350px] px-2 sm:px-6 py-4 lg:px-8"
       >
         <Outlet />
       </div>
