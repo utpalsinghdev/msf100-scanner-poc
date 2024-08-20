@@ -67,28 +67,49 @@ const ViewStudent = () => {
                 {/* Fingers */}
 
                 <div className='border border-black w-44 flex items-center flex-col gap-3 p-2 rounded-md'>
-                    <img src={`data:image/png;base64,${data.data.finger1}`} alt='inf' />
+                    <img
+                        src={`data:image/png;base64,${data.data.finger1}`}
+                        alt='inf'
+                        style={{ filter: 'invert(100%) brightness(200%)' }}
+                    />
                     <span className="font-bold">Finger 1</span>
                 </div>
                 <div className='border border-black w-44 flex items-center flex-col gap-3 p-2 rounded-md'>
-                    <img src={`data:image/png;base64,${data.data.finger2}`} alt='inf' />
+                    <img
+                        src={`data:image/png;base64,${data.data.finger2}`}
+                        alt='inf'
+                        style={{ filter: 'invert(100%) brightness(200%)' }}
+                    />
                     <span className="font-bold">Finger 2</span>
                 </div>
                 <div className='border border-black w-44 flex items-center flex-col gap-3 p-2 rounded-md'>
-                    <img src={`data:image/png;base64,${data.data.finger3}`} alt='inf' />
+                    <img
+                        src={`data:image/png;base64,${data.data.finger3}`}
+                        alt='inf'
+                        style={{ filter: 'invert(100%) brightness(200%)' }}
+                    />
                     <span className="font-bold">Finger 3</span>
                 </div>
                 <div className='border border-black w-44 flex items-center flex-col gap-3 p-2 rounded-md'>
-                    <img src={`data:image/png;base64,${data.data.finger4}`} alt='inf' />
+                    <img
+                        src={`data:image/png;base64,${data.data.finger4}`}
+                        alt='inf'
+                        style={{ filter: 'invert(100%) brightness(200%)' }}
+                    />
                     <span className="font-bold">Finger 4</span>
                 </div>
                 <div className='border border-black w-44 flex items-center flex-col gap-3 p-2 rounded-md'>
-                    <img src={`data:image/png;base64,${data.data.finger5}`} alt='inf' />
+                    <img
+                        src={`data:image/png;base64,${data.data.finger5}`}
+                        alt='inf'
+                        style={{ filter: 'invert(100%) brightness(200%)' }}
+                    />
                     <span className="font-bold">Finger 5</span>
                 </div>
 
             </div>
-        </div>)
+        </div>
+    )
 }
 
 export default ViewStudent
