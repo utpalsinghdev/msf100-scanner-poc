@@ -85,7 +85,6 @@ const ViewStudent = () => {
                 <div className='border border-black w-44 flex items-center flex-col gap-3 p-2 rounded-md'>
                     <img src={`data:image/png;base64,${data.data.finger5}`} alt='inf' />
                     <span className="font-bold">Finger 5</span>
-
                 </div>
 
             </div>
