@@ -63,7 +63,7 @@ const ViewStudent = () => {
                 Finger List
             </h1>
 
-            <div className='grid mt-4 mx-auto grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3'>
+            <div className='grid mt-4 w-max mx-auto grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-10'>
                 {Array.from({ length: 5 }).map((_, index) => (
                     <div className='border border-black w-max flex items-center flex-col gap-3 p-2 rounded-md'>
                         <img
