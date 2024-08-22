@@ -62,7 +62,7 @@ const Students = () => {
             Header: "finger1",
             accessor: "finger1",
             Cell: (cell: any) => (
-                <img style={{ filter: 'invert(100%) brightness(200%)' }} draggable={false} src={`data:image/png;base64,${cell.row.original.finger1}`} className="w-20" alt='inf' />
+                <img style={{ filter: 'invert(100%) brightness(200%)' }} draggable={false} src={`data:image/png;base64,${cell.row.original.finger1}`} className="w-24" alt='inf' />
             )
         },
         {
