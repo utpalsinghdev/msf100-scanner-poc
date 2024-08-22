@@ -64,48 +64,18 @@ const ViewStudent = () => {
             </h1>
 
             <div className='grid mt-4 mx-auto grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3'>
-                {/* Fingers */}
+                {Array.from({ length: 5 }).map((_, index) => (
+                    <div className='border border-black w-max flex items-center flex-col gap-3 p-2 rounded-md'>
+                        <img
+                            className="w-[100px] h-[110px]"
+                            src={`data:image/png;base64,${data.data[`finger${index + 1}`]}`}
+                            alt='inf'
+                            style={{ filter: 'invert(100%) brightness(200%)' }}
+                        />
+                        <span className="font-bold">Finger {index + 1}</span>
+                    </div>
+                ))}
 
-                <div className='border border-black w-44 flex items-center flex-col gap-3 p-2 rounded-md'>
-                    <img
-                        src={`data:image/png;base64,${data.data.finger1}`}
-                        alt='inf'
-                        style={{ filter: 'invert(100%) brightness(200%)' }}
-                    />
-                    <span className="font-bold">Finger 1</span>
-                </div>
-                <div className='border border-black w-44 flex items-center flex-col gap-3 p-2 rounded-md'>
-                    <img
-                        src={`data:image/png;base64,${data.data.finger2}`}
-                        alt='inf'
-                        style={{ filter: 'invert(100%) brightness(200%)' }}
-                    />
-                    <span className="font-bold">Finger 2</span>
-                </div>
-                <div className='border border-black w-44 flex items-center flex-col gap-3 p-2 rounded-md'>
-                    <img
-                        src={`data:image/png;base64,${data.data.finger3}`}
-                        alt='inf'
-                        style={{ filter: 'invert(100%) brightness(200%)' }}
-                    />
-                    <span className="font-bold">Finger 3</span>
-                </div>
-                <div className='border border-black w-44 flex items-center flex-col gap-3 p-2 rounded-md'>
-                    <img
-                        src={`data:image/png;base64,${data.data.finger4}`}
-                        alt='inf'
-                        style={{ filter: 'invert(100%) brightness(200%)' }}
-                    />
-                    <span className="font-bold">Finger 4</span>
-                </div>
-                <div className='border border-black w-44 flex items-center flex-col gap-3 p-2 rounded-md'>
-                    <img
-                        src={`data:image/png;base64,${data.data.finger5}`}
-                        alt='inf'
-                        style={{ filter: 'invert(100%) brightness(200%)' }}
-                    />
-                    <span className="font-bold">Finger 5</span>
-                </div>
 
             </div>
         </div>
