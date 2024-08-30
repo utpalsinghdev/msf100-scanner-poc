@@ -62,35 +62,35 @@ const Students = () => {
             Header: "finger1",
             accessor: "finger1",
             Cell: (cell: any) => (
-                <img style={{ filter: 'invert(100%) brightness(200%)' }} draggable={false} src={`data:image/png;base64,${cell.row.original.finger1}`} className="w-24" alt='inf' />
+                <img style={{ filter: 'invert(100%) brightness(100%)' }} draggable={false} src={`data:image/png;base64,${cell.row.original.finger1}`} className="w-24" alt='inf' />
             )
         },
         {
             Header: "finger2",
             accessor: "finger2",
             Cell: (cell: any) => (
-                <img style={{ filter: 'invert(100%) brightness(200%)' }} draggable={false} src={`data:image/png;base64,${cell.row.original.finger2}`} className="w-20" alt='inf' />
+                <img style={{ filter: 'invert(100%) brightness(100%)' }} draggable={false} src={`data:image/png;base64,${cell.row.original.finger2}`} className="w-20" alt='inf' />
             )
         },
         {
             Header: "finger3",
             accessor: "finger3",
             Cell: (cell: any) => (
-                <img style={{ filter: 'invert(100%) brightness(200%)' }} draggable={false} src={`data:image/png;base64,${cell.row.original.finger3}`} className="w-20" alt='inf' />
+                <img style={{ filter: 'invert(100%) brightness(100%)' }} draggable={false} src={`data:image/png;base64,${cell.row.original.finger3}`} className="w-20" alt='inf' />
             )
         },
         {
             Header: "finger4",
             accessor: "finger4",
             Cell: (cell: any) => (
-                <img style={{ filter: 'invert(100%) brightness(200%)' }} draggable={false} src={`data:image/png;base64,${cell.row.original.finger4}`} className="w-20" alt='inf' />
+                <img style={{ filter: 'invert(100%) brightness(100%)' }} draggable={false} src={`data:image/png;base64,${cell.row.original.finger4}`} className="w-20" alt='inf' />
             )
         },
         {
             Header: "finger5",
             accessor: "finger5",
             Cell: (cell: any) => (
-                <img style={{ filter: 'invert(100%) brightness(200%)' }} draggable={false} src={`data:image/png;base64,${cell.row.original.finger5}`} className="w-20" alt='inf' />
+                <img style={{ filter: 'invert(100%) brightness(100%)' }} draggable={false} src={`data:image/png;base64,${cell.row.original.finger5}`} className="w-20" alt='inf' />
             )
         },
         {
