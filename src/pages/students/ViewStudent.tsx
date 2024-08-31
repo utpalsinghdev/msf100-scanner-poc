@@ -70,7 +70,11 @@ const ViewStudent = () => {
                             className="w-[100px] h-[110px]"
                             src={`data:image/png;base64,${data.data[`finger${index + 1}`]}`}
                             alt='inf'
-                            style={{ filter: 'invert(100%) brightness(80%)' }}
+                            style={{
+                                filter: 'invert(100%) brightness(80%)',
+                                mixBlendMode: 'hard-light'
+
+                            }}
                         />
                         <span className="font-bold">Finger {index + 1}</span>
                     </div>
