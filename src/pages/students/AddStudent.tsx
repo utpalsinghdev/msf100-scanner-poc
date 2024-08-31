@@ -162,7 +162,7 @@ const AddStudent = () => {
                                 {/* Fingers */}
 
                                 <div className='border border-black w-44 flex items-center flex-col gap-3 p-2 rounded-md'>
-                                    {formik.values.finger1 ? <img style={{ filter: 'invert(100%) brightness(70%)' }} src={`data:image/png;base64,${formik.values.finger1}`} alt='inf' /> : <Fingerprint width={104} height={104} />}
+                                    {formik.values.finger1 ? <img style={{ filter: 'invert(100%) brightness(80%)' }} src={`data:image/png;base64,${formik.values.finger1}`} alt='inf' /> : <Fingerprint width={104} height={104} />}
                                     <Button
                                         variant={"secondary"}
                                         type='button'
@@ -187,7 +187,7 @@ const AddStudent = () => {
                                     </Button>
                                 </div>
                                 <div className='border border-black w-44 flex items-center flex-col gap-3 p-2 rounded-md'>
-                                    {formik.values.finger2 ? <img style={{ filter: 'invert(100%) brightness(70%)' }} src={`data:image/png;base64,${formik.values.finger2}`} alt='inf' /> : <Fingerprint width={104} height={104} />}
+                                    {formik.values.finger2 ? <img style={{ filter: 'invert(100%) brightness(80%)' }} src={`data:image/png;base64,${formik.values.finger2}`} alt='inf' /> : <Fingerprint width={104} height={104} />}
 
                                     <Button
                                         variant={"secondary"}
@@ -213,7 +213,7 @@ const AddStudent = () => {
                                     </Button>
                                 </div>
                                 <div className='border border-black w-44 flex items-center flex-col gap-3 p-2 rounded-md'>
-                                    {formik.values.finger3 ? <img style={{ filter: 'invert(100%) brightness(70%)' }} src={`data:image/png;base64,${formik.values.finger3}`} alt='inf' /> : <Fingerprint width={104} height={104} />}
+                                    {formik.values.finger3 ? <img style={{ filter: 'invert(100%) brightness(80%)' }} src={`data:image/png;base64,${formik.values.finger3}`} alt='inf' /> : <Fingerprint width={104} height={104} />}
                                     <Button
                                         variant={"secondary"}
                                         type='button'
@@ -238,7 +238,7 @@ const AddStudent = () => {
                                     </Button>
                                 </div>
                                 <div className='border border-black w-44 flex items-center flex-col gap-3 p-2 rounded-md'>
-                                    {formik.values.finger4 ? <img style={{ filter: 'invert(100%) brightness(70%)' }} src={`data:image/png;base64,${formik.values.finger4}`} alt='inf' /> : <Fingerprint width={104} height={104} />}
+                                    {formik.values.finger4 ? <img style={{ filter: 'invert(100%) brightness(80%)' }} src={`data:image/png;base64,${formik.values.finger4}`} alt='inf' /> : <Fingerprint width={104} height={104} />}
                                     <Button
                                         variant={"secondary"}
                                         type='button'
@@ -263,7 +263,7 @@ const AddStudent = () => {
                                     </Button>
                                 </div>
                                 <div className='border border-black w-44 flex items-center flex-col gap-3 p-2 rounded-md'>
-                                    {formik.values.finger5 ? <img style={{ filter: 'invert(100%) brightness(70%)' }} src={`data:image/png;base64,${formik.values.finger5}`} alt='inf' /> : <Fingerprint width={104} height={104} />}
+                                    {formik.values.finger5 ? <img style={{ filter: 'invert(100%) brightness(80%)' }} src={`data:image/png;base64,${formik.values.finger5}`} alt='inf' /> : <Fingerprint width={104} height={104} />}
                                     <Button
                                         variant={"secondary"}
                                         type='button'
