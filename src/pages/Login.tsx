@@ -7,7 +7,7 @@ import { useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
 import { useAuth } from '@/contexts/AuthContext';
-import { Fingerprint, Shield } from 'lucide-react';
+import { Fingerprint, Sparkles } from 'lucide-react';
 import type { AuthSession } from '@/types/auth';
 
 export default function Login() {
@@ -33,16 +33,16 @@ export default function Login() {
 
         <div className="max-w-md space-y-6">
           <h1 className="text-4xl font-bold leading-tight">
-            Secure biometric administration for your organization
+            Work that feels easy, every day
           </h1>
           <p className="text-lg text-indigo-100/90">
-            Manage admins, batches, and student fingerprints with role-based
-            access and Mantra MFS100 scanner integration.
+            A calm, polished experience from sign-in to sign-out—clear layouts,
+            quick flows, and less friction so you can focus on what matters.
           </p>
           <div className="flex items-center gap-3 rounded-xl bg-white/10 px-4 py-3 ring-1 ring-white/20">
-            <Shield className="h-5 w-5 text-indigo-200" />
+            <Sparkles className="h-5 w-5 text-indigo-200" />
             <p className="text-sm text-indigo-100">
-              MasterAdmin and Admin roles with configurable limits
+              Smooth, responsive, and thoughtfully designed for everyday comfort
             </p>
           </div>
         </div>
