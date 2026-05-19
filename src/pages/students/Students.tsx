@@ -8,14 +8,18 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { canPerform } from "@/lib/permissions";
 import { FingerprintImage } from "@/components/ui/FingerprintImage";
+import { Button } from "@/components/ui/button";
+import { exportStudentsPdf, type StudentPdfRecord } from "@/lib/exportStudentsPdf";
+import { FileDown } from "lucide-react";
 
 const Students = () => {
     const navigate = useNavigate()
     const { user } = useAuth()
     const [news, setNews] = useState({
         loading: true,
-        data: [] as any[],
+        data: [] as StudentPdfRecord[],
     });
+    const [exporting, setExporting] = useState(false);
 
     async function fetchData() {
         setNews(prev => ({ ...prev, loading: true }))
@@ -32,6 +36,23 @@ const Students = () => {
     useEffect(() => {
         fetchData()
     }, [])
+
+    async function handleExportPdf() {
+        if (news.data.length === 0) {
+            toast.error("No students to export");
+            return;
+        }
+        setExporting(true);
+        try {
+            await exportStudentsPdf(news.data);
+            toast.success("PDF downloaded");
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : "Export failed";
+            toast.error(message);
+        } finally {
+            setExporting(false);
+        }
+    }
 
     const columns = () => [
         {
@@ -113,6 +134,20 @@ const Students = () => {
     ) : (
         <>
         <Table
+            headerActions={
+                canPerform(user, 'view') ? (
+                    <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full gap-2 sm:w-auto"
+                        disabled={exporting || news.data.length === 0}
+                        onClick={handleExportPdf}
+                    >
+                        <FileDown className="h-4 w-4" />
+                        {exporting ? "Exporting…" : "Export PDF"}
+                    </Button>
+                ) : undefined
+            }
             btnText={canPerform(user, 'add') ? "Add student" : undefined}
             btnfunc={canPerform(user, 'add') ? () => navigate("/student/add") : undefined}
             title="Students"

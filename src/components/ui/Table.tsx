@@ -124,6 +124,7 @@ function Table({
   subtitle,
   dataName,
   btnfunc,
+  headerActions,
 }: any) {
   const isMobile = useIsMobile();
   const {
@@ -163,12 +164,15 @@ function Table({
             <p className="mt-1 text-sm text-slate-500">{subtitle}</p>
           )}
         </div>
-        {btnText && (
-          <Button onClick={btnfunc} className="w-full shrink-0 gap-2 sm:w-auto">
-            <Plus className="h-4 w-4" />
-            {btnText}
-          </Button>
-        )}
+        <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row">
+          {headerActions}
+          {btnText && (
+            <Button onClick={btnfunc} className="w-full gap-2 sm:w-auto">
+              <Plus className="h-4 w-4" />
+              {btnText}
+            </Button>
+          )}
+        </div>
       </div>
       <div className="border-b border-slate-50 px-4 py-3 sm:px-6 sm:py-4">
         <GlobalFilter
