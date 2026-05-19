@@ -12,14 +12,21 @@ import Badge, { enums } from '@/components/ui/Badge';
 import type { UserRole } from '@/types/auth';
 import { Plus } from 'lucide-react';
 import { useIsMobile } from '@/hooks/useMediaQuery';
+import { formatDate } from '@/lib/formatDate';
 
 type ManagedUser = {
   id: string;
   name: string;
   email: string;
   role: UserRole;
+  plainPassword: string | null;
   maxBatches: number | null;
   maxStudentsPerBatch: number | null;
+  canAdd: boolean;
+  canEdit: boolean;
+  canView: boolean;
+  canDelete: boolean;
+  createdAt: string;
   _count: { batches: number };
 };
 
@@ -27,19 +34,67 @@ const emptyForm = {
   name: '',
   email: '',
   password: '',
-  role: 'Admin' as UserRole,
+  role: 'User' as UserRole,
   maxBatches: 5,
   maxStudentsPerBatch: 45,
+  canAdd: true,
+  canEdit: true,
+  canView: true,
+  canDelete: true,
 };
+
+function roleLabel(role: UserRole) {
+  return role === 'MasterAdmin' ? 'Master Admin' : 'User';
+}
+
+function PermissionCheckboxes({
+  values,
+  onChange,
+}: {
+  values: typeof emptyForm;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+}) {
+  const perms = [
+    { name: 'canAdd', label: 'Add' },
+    { name: 'canEdit', label: 'Edit' },
+    { name: 'canView', label: 'View' },
+    { name: 'canDelete', label: 'Delete' },
+  ] as const;
+
+  return (
+    <fieldset className="rounded-xl border border-slate-200 p-4">
+      <legend className="px-1 text-sm font-medium text-slate-700">Access permissions</legend>
+      <p className="mb-3 text-xs text-slate-500">
+        Control what this user can do with batches and students.
+      </p>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {perms.map(({ name, label }) => (
+          <label key={name} className="flex cursor-pointer items-center gap-2 text-sm text-slate-700">
+            <input
+              type="checkbox"
+              name={name}
+              checked={values[name]}
+              onChange={onChange}
+              className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+            />
+            {label}
+          </label>
+        ))}
+      </div>
+    </fieldset>
+  );
+}
 
 function UserCard({
   user,
   onEdit,
   onDelete,
+  onView,
 }: {
   user: ManagedUser;
   onEdit: () => void;
   onDelete: () => void;
+  onView: () => void;
 }) {
   return (
     <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -55,27 +110,42 @@ function UserCard({
               : 'bg-emerald-100 text-emerald-700'
           }`}
         >
-          {user.role}
+          {roleLabel(user.role)}
         </span>
       </div>
-      {user.role === 'Admin' && (
-        <dl className="mt-4 grid grid-cols-3 gap-2 border-t border-slate-100 pt-4 text-center text-xs">
-          <div>
-            <dt className="text-slate-400">Batches</dt>
-            <dd className="mt-0.5 font-semibold text-slate-800">{user.maxBatches}</dd>
-          </div>
-          <div>
-            <dt className="text-slate-400">Students</dt>
-            <dd className="mt-0.5 font-semibold text-slate-800">{user.maxStudentsPerBatch}</dd>
-          </div>
-          <div>
-            <dt className="text-slate-400">Created</dt>
-            <dd className="mt-0.5 font-semibold text-slate-800">{user._count.batches}</dd>
-          </div>
-        </dl>
-      )}
+      <dl className="mt-4 grid grid-cols-2 gap-2 border-t border-slate-100 pt-4 text-xs sm:grid-cols-3">
+        <div>
+          <dt className="text-slate-400">Created</dt>
+          <dd className="mt-0.5 font-semibold text-slate-800">{formatDate(user.createdAt)}</dd>
+        </div>
+        <div>
+          <dt className="text-slate-400">Password</dt>
+          <dd className="mt-0.5 font-mono font-semibold text-slate-800">
+            {user.plainPassword ?? '—'}
+          </dd>
+        </div>
+        {user.role === 'User' && (
+          <>
+            <div>
+              <dt className="text-slate-400">Batch limit</dt>
+              <dd className="mt-0.5 font-semibold text-slate-800">{user.maxBatches}</dd>
+            </div>
+            <div>
+              <dt className="text-slate-400">Students/batch</dt>
+              <dd className="mt-0.5 font-semibold text-slate-800">{user.maxStudentsPerBatch}</dd>
+            </div>
+            <div>
+              <dt className="text-slate-400">Batches used</dt>
+              <dd className="mt-0.5 font-semibold text-slate-800">{user._count.batches}</dd>
+            </div>
+          </>
+        )}
+      </dl>
       <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
-        {user.role === 'Admin' && (
+        <Badge type={enums.BLUE} onClick={onView}>
+          View
+        </Badge>
+        {user.role === 'User' && (
           <Badge type={enums.GREEN} onClick={onEdit}>
             Edit
           </Badge>
@@ -92,6 +162,7 @@ export default function Users() {
   const isMobile = useIsMobile();
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [viewUser, setViewUser] = useState<ManagedUser | null>(null);
   const [modal, setModal] = useState<{
     open: boolean;
     editId: string;
@@ -125,6 +196,10 @@ export default function Users() {
         role: u.role,
         maxBatches: u.maxBatches ?? 5,
         maxStudentsPerBatch: u.maxStudentsPerBatch ?? 45,
+        canAdd: u.canAdd,
+        canEdit: u.canEdit,
+        canView: u.canView,
+        canDelete: u.canDelete,
       },
     });
 
@@ -146,7 +221,7 @@ export default function Users() {
     <div>
       <PageHeader
         title="User management"
-        subtitle="Create MasterAdmins and Admins with configurable limits"
+        subtitle="Create Master Admins and Users with limits and access control"
         action={
           <Button
             onClick={() =>
@@ -171,6 +246,7 @@ export default function Users() {
               <UserCard
                 key={u.id}
                 user={u}
+                onView={() => setViewUser(u)}
                 onEdit={() => openEdit(u)}
                 onDelete={() => deleteUser(u.id)}
               />
@@ -182,23 +258,31 @@ export default function Users() {
           <table className="min-w-full divide-y divide-slate-200">
             <thead className="bg-slate-50">
               <tr>
-                {['Name', 'ID', 'Role', 'Batch limit', 'Students/batch', 'Batches', 'Actions'].map(
-                  (h) => (
-                    <th
-                      key={h}
-                      className="whitespace-nowrap px-4 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 lg:px-6"
-                    >
-                      {h}
-                    </th>
-                  ),
-                )}
+                {[
+                  'Name',
+                  'ID',
+                  'Role',
+                  'Password',
+                  'Created',
+                  'Batch limit',
+                  'Students/batch',
+                  'Batches',
+                  'Actions',
+                ].map((h) => (
+                  <th
+                    key={h}
+                    className="whitespace-nowrap px-4 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 lg:px-6"
+                  >
+                    {h}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {users.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-slate-500">
-                    No users yet. Create your first Admin or MasterAdmin.
+                  <td colSpan={9} className="px-6 py-12 text-center text-slate-500">
+                    No users yet. Create your first User or Master Admin.
                   </td>
                 </tr>
               ) : (
@@ -214,19 +298,28 @@ export default function Users() {
                             : 'bg-emerald-100 text-emerald-700'
                         }`}
                       >
-                        {u.role}
+                        {roleLabel(u.role)}
                       </span>
                     </td>
-                    <td className="px-4 py-4 text-slate-600 lg:px-6">
-                      {u.role === 'Admin' ? u.maxBatches : '—'}
+                    <td className="px-4 py-4 font-mono text-sm text-slate-600 lg:px-6">
+                      {u.plainPassword ?? '—'}
                     </td>
                     <td className="px-4 py-4 text-slate-600 lg:px-6">
-                      {u.role === 'Admin' ? u.maxStudentsPerBatch : '—'}
+                      {formatDate(u.createdAt)}
+                    </td>
+                    <td className="px-4 py-4 text-slate-600 lg:px-6">
+                      {u.role === 'User' ? u.maxBatches : '—'}
+                    </td>
+                    <td className="px-4 py-4 text-slate-600 lg:px-6">
+                      {u.role === 'User' ? u.maxStudentsPerBatch : '—'}
                     </td>
                     <td className="px-4 py-4 text-slate-600 lg:px-6">{u._count.batches}</td>
                     <td className="px-4 py-4 lg:px-6">
                       <span className="flex flex-wrap gap-2">
-                        {u.role === 'Admin' && (
+                        <Badge type={enums.BLUE} onClick={() => setViewUser(u)}>
+                          View
+                        </Badge>
+                        {u.role === 'User' && (
                           <Badge type={enums.GREEN} onClick={() => openEdit(u)}>
                             Edit
                           </Badge>
@@ -245,7 +338,75 @@ export default function Users() {
       )}
 
       <Modal
-        title={modal.editId ? 'Edit admin limits' : 'Create user'}
+        title="User details"
+        open={!!viewUser}
+        setOpen={(open) => !open && setViewUser(null)}
+        size="max-w-md"
+      >
+        {viewUser && (
+          <dl className="space-y-3 text-sm">
+            <div className="flex justify-between gap-4">
+              <dt className="text-slate-500">Name</dt>
+              <dd className="font-medium text-slate-900">{viewUser.name}</dd>
+            </div>
+            <div className="flex justify-between gap-4">
+              <dt className="text-slate-500">Account ID</dt>
+              <dd className="font-medium text-slate-900">{viewUser.email}</dd>
+            </div>
+            <div className="flex justify-between gap-4">
+              <dt className="text-slate-500">Role</dt>
+              <dd className="font-medium text-slate-900">{roleLabel(viewUser.role)}</dd>
+            </div>
+            <div className="flex justify-between gap-4">
+              <dt className="text-slate-500">Password</dt>
+              <dd className="font-mono font-medium text-slate-900">
+                {viewUser.plainPassword ?? '—'}
+              </dd>
+            </div>
+            <div className="flex justify-between gap-4">
+              <dt className="text-slate-500">Created</dt>
+              <dd className="font-medium text-slate-900">{formatDate(viewUser.createdAt)}</dd>
+            </div>
+            {viewUser.role === 'User' && (
+              <>
+                <div className="flex justify-between gap-4">
+                  <dt className="text-slate-500">Batch limit</dt>
+                  <dd className="font-medium text-slate-900">{viewUser.maxBatches}</dd>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <dt className="text-slate-500">Students per batch</dt>
+                  <dd className="font-medium text-slate-900">{viewUser.maxStudentsPerBatch}</dd>
+                </div>
+                <div className="border-t border-slate-100 pt-3">
+                  <dt className="mb-2 text-slate-500">Permissions</dt>
+                  <dd className="flex flex-wrap gap-2">
+                    {[
+                      ['Add', viewUser.canAdd],
+                      ['Edit', viewUser.canEdit],
+                      ['View', viewUser.canView],
+                      ['Delete', viewUser.canDelete],
+                    ].map(([label, enabled]) => (
+                      <span
+                        key={label as string}
+                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                          enabled
+                            ? 'bg-emerald-100 text-emerald-700'
+                            : 'bg-slate-100 text-slate-500'
+                        }`}
+                      >
+                        {label as string}
+                      </span>
+                    ))}
+                  </dd>
+                </div>
+              </>
+            )}
+          </dl>
+        )}
+      </Modal>
+
+      <Modal
+        title={modal.editId ? 'Edit user' : 'Create user'}
         open={modal.open}
         setOpen={(open) => !open && setModal({ open: false, editId: '', data: emptyForm })}
         size="max-w-lg"
@@ -261,6 +422,10 @@ export default function Users() {
                   email: values.email,
                   maxBatches: Number(values.maxBatches),
                   maxStudentsPerBatch: Number(values.maxStudentsPerBatch),
+                  canAdd: values.canAdd,
+                  canEdit: values.canEdit,
+                  canView: values.canView,
+                  canDelete: values.canDelete,
                 };
                 if (values.password) payload.password = values.password;
                 const res = await Api.patch(`api/user/${modal.editId}`, payload);
@@ -297,8 +462,8 @@ export default function Users() {
                       onChange={formik.handleChange}
                       className="mt-1.5 h-11 w-full rounded-xl border border-slate-200 px-3.5 text-sm shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                     >
-                      <option value="Admin">Admin</option>
-                      <option value="MasterAdmin">MasterAdmin</option>
+                      <option value="User">User</option>
+                      <option value="MasterAdmin">Master Admin</option>
                     </select>
                   </div>
                   <PasswordInput
@@ -312,23 +477,26 @@ export default function Users() {
                   />
                 </>
               )}
-              {formik.values.role === 'Admin' && (
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <Input
-                    name="maxBatches"
-                    label="Max batches"
-                    type="number"
-                    value={String(formik.values.maxBatches)}
-                    onChange={formik.handleChange}
-                  />
-                  <Input
-                    name="maxStudentsPerBatch"
-                    label="Max students / batch"
-                    type="number"
-                    value={String(formik.values.maxStudentsPerBatch)}
-                    onChange={formik.handleChange}
-                  />
-                </div>
+              {formik.values.role === 'User' && (
+                <>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <Input
+                      name="maxBatches"
+                      label="Max batches"
+                      type="number"
+                      value={String(formik.values.maxBatches)}
+                      onChange={formik.handleChange}
+                    />
+                    <Input
+                      name="maxStudentsPerBatch"
+                      label="Max students / batch"
+                      type="number"
+                      value={String(formik.values.maxStudentsPerBatch)}
+                      onChange={formik.handleChange}
+                    />
+                  </div>
+                  <PermissionCheckboxes values={formik.values} onChange={formik.handleChange} />
+                </>
               )}
               {modal.editId && (
                 <PasswordInput

@@ -5,6 +5,8 @@ import Api from "@/lib/api";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { canPerform } from "@/lib/permissions";
 
 const fingerStyle = {
     filter: 'invert(55%) sepia(25%) saturate(400%) hue-rotate(200deg)',
@@ -12,6 +14,7 @@ const fingerStyle = {
 
 const Students = () => {
     const navigate = useNavigate()
+    const { user } = useAuth()
     const [news, setNews] = useState({
         loading: true,
         data: [] as any[],
@@ -81,12 +84,17 @@ const Students = () => {
             accessor: "action",
             Cell: (cell: any) => (
                 <span className="flex items-center gap-2">
+                    {canPerform(user, 'view') && (
                     <Badge onClick={() => navigate(`/view-student/${cell.row.original.id}`)} type={enums.BLUE}>
                         View
                     </Badge>
+                    )}
+                    {canPerform(user, 'edit') && (
                     <Badge onClick={() => navigate(`/student/${cell.row.original.id}`)} type={enums.GREEN}>
                         Edit
                     </Badge>
+                    )}
+                    {canPerform(user, 'delete') && (
                     <Badge
                         onClick={async () => {
                             if (!window.confirm("Delete this student?")) return;
@@ -105,6 +113,7 @@ const Students = () => {
                     >
                         Delete
                     </Badge>
+                    )}
                 </span>
             ),
         },
@@ -114,8 +123,8 @@ const Students = () => {
         <Loader />
     ) : (
         <Table
-            btnText="Add student"
-            btnfunc={() => navigate("/student/add")}
+            btnText={canPerform(user, 'add') ? "Add student" : undefined}
+            btnfunc={canPerform(user, 'add') ? () => navigate("/student/add") : undefined}
             title="Students"
             subtitle="Registered students with captured fingerprints"
             dataName="students"

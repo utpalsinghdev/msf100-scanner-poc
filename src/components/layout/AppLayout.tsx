@@ -24,6 +24,8 @@ export default function AppLayout() {
     ? [
         { to: '/', label: 'Dashboard', icon: Home },
         { to: '/users', label: 'Users', icon: UserCog },
+        { to: '/batch', label: 'Batches', icon: Layers },
+        { to: '/student', label: 'Students', icon: Users },
       ]
     : [
         { to: '/', label: 'Dashboard', icon: Home },

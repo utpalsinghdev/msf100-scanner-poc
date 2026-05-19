@@ -44,7 +44,7 @@ function AppRoutes() {
               children: [{ path: '/users', element: <Users /> }],
             },
             {
-              element: <RoleRoutes roles={['Admin']} />,
+              element: <RoleRoutes roles={['User', 'MasterAdmin']} />,
               children: [
                 { path: '/batch', element: <Batch /> },
                 { path: '/student', element: <Students /> },

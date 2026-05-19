@@ -7,8 +7,8 @@ import Api from '@/lib/api';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 
-type AdminDashboard = {
-  role: 'Admin';
+type UserDashboard = {
+  role: 'User';
   batches: number;
   students: number;
   maxBatches: number;
@@ -18,15 +18,17 @@ type AdminDashboard = {
 
 type MasterDashboard = {
   role: 'MasterAdmin';
-  admins: number;
+  users: number;
   masterAdmins: number;
   totalUsers: number;
+  batches: number;
+  students: number;
 };
 
 function DashboardHome() {
   const { hasRole } = useAuth();
   const navigate = useNavigate();
-  const [dashboard, setDashboard] = useState<AdminDashboard | MasterDashboard | null>(
+  const [dashboard, setDashboard] = useState<UserDashboard | MasterDashboard | null>(
     null,
   );
   const [loading, setLoading] = useState(true);
@@ -47,7 +49,7 @@ function DashboardHome() {
         title={isMaster ? 'Master Admin Dashboard' : 'Dashboard'}
         subtitle={
           isMaster
-            ? 'Overview of users you have created'
+            ? 'Overview of users, batches, and students'
             : 'Your batches, students, and remaining capacity'
         }
       />
@@ -62,8 +64,8 @@ function DashboardHome() {
             onClick={() => navigate('/users')}
           />
           <StatCard
-            label="Admins"
-            value={dashboard.admins}
+            label="Users"
+            value={dashboard.users}
             icon={UserCog}
             accent="emerald"
             onClick={() => navigate('/users')}
@@ -75,8 +77,22 @@ function DashboardHome() {
             accent="violet"
             onClick={() => navigate('/users')}
           />
+          <StatCard
+            label="Batches"
+            value={dashboard.batches}
+            icon={Layers}
+            accent="emerald"
+            onClick={() => navigate('/batch')}
+          />
+          <StatCard
+            label="Students"
+            value={dashboard.students}
+            icon={Users2}
+            accent="indigo"
+            onClick={() => navigate('/student')}
+          />
         </div>
-      ) : dashboard?.role === 'Admin' ? (
+      ) : dashboard?.role === 'User' ? (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
             label="Students"
@@ -112,8 +128,8 @@ function DashboardHome() {
         <ul className="mt-3 space-y-2 text-sm text-slate-600">
           {isMaster ? (
             <>
-              <li>• Create Admins with batch and student limits from the Users page.</li>
-              <li>• You only see users that you created.</li>
+              <li>• Create Users with batch limits and access permissions from the Users page.</li>
+              <li>• You can create unlimited batches and students as Master Admin.</li>
             </>
           ) : (
             <>

@@ -8,6 +8,8 @@ import Api from "@/lib/api";
 import { Formik } from "formik";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { canPerform } from "@/lib/permissions";
 
 const initialModalState = {
     state: false,
@@ -18,6 +20,7 @@ const initialModalState = {
 };
 
 const Batch = () => {
+    const { user } = useAuth();
     const [modal, setModal] = useState(initialModalState);
 
     const [news, setNews] = useState({
@@ -144,6 +147,7 @@ const Batch = () => {
             accessor: "action",
             Cell: (cell: any) => (
                 <span className="flex items-center gap-2">
+                    {canPerform(user, 'edit') && (
                     <Badge onClick={() => {
                         setModal({
                             state: true,
@@ -153,6 +157,8 @@ const Batch = () => {
                     }} type={enums.GREEN}>
                         Edit
                     </Badge>
+                    )}
+                    {canPerform(user, 'delete') && (
                     <Badge
                         onClick={async () => {
                             if (!window.confirm("Delete this batch and all its students?")) return;
@@ -171,6 +177,7 @@ const Batch = () => {
                     >
                         Delete
                     </Badge>
+                    )}
                 </span>
             ),
         },
@@ -183,14 +190,14 @@ const Batch = () => {
                 <Loader />
             ) : (
                 <Table
-                    btnText="Add batch"
-                    btnfunc={() =>
+                    btnText={canPerform(user, 'add') ? "Add batch" : undefined}
+                    btnfunc={canPerform(user, 'add') ? () =>
                         setModal({
                             state: true,
                             edit_id: "",
                             data: initialModalState.data,
                         })
-                    }
+                    : undefined}
                     title="Batches"
                     subtitle="Create and manage your training batches"
                     dataName="batches"
