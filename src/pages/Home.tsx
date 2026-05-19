@@ -1,76 +1,130 @@
-import { StampIcon, Users2Icon } from "lucide-react";
-import { NewspaperIcon } from "@heroicons/react/24/outline";
-import Loader from "@/components/ui/Loader";
-import { useEffect, useState } from "react";
-import Api from "@/lib/api";
-import { useNavigate } from "react-router-dom";
+import { Users2, Layers, UserCog, Shield, StampIcon } from 'lucide-react';
+import Loader from '@/components/ui/Loader';
+import PageHeader from '@/components/ui/PageHeader';
+import StatCard from '@/components/ui/StatCard';
+import { useEffect, useState } from 'react';
+import Api from '@/lib/api';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+
+type AdminDashboard = {
+  role: 'Admin';
+  batches: number;
+  students: number;
+  maxBatches: number;
+  maxStudentsPerBatch: number;
+  remainingBatches: number;
+};
+
+type MasterDashboard = {
+  role: 'MasterAdmin';
+  admins: number;
+  masterAdmins: number;
+  totalUsers: number;
+};
 
 function DashboardHome() {
-    const [_dashboard, setDashboard] = useState({
-        data: {
-            batches: 0,
-            students: 0
-        },
-        loading: true
-    })
+  const { hasRole } = useAuth();
+  const navigate = useNavigate();
+  const [dashboard, setDashboard] = useState<AdminDashboard | MasterDashboard | null>(
+    null,
+  );
+  const [loading, setLoading] = useState(true);
 
-    async function das() {
-        const res = await Api.get("api/auth/admin/dashboard")
-        setDashboard(() => ({
-            ...res.data
-        }))
-    }
+  useEffect(() => {
+    Api.get('api/auth/admin/dashboard')
+      .then((res) => setDashboard(res.data.data))
+      .finally(() => setLoading(false));
+  }, []);
 
-    useEffect(() => {
-        das()
-    }, [])
+  if (loading) return <Loader />;
 
-    const navigate = useNavigate()
+  const isMaster = hasRole('MasterAdmin');
 
-    return _dashboard.loading ? (
-        <Loader />
-    ) : (
-        <div className="w-full h-full flex items-center flex-col md:flex-row gap-8 justify-between transition-transform duration-300">
-            <img src={"/3556960.jpg"} className="w-[600px]" />
+  return (
+    <div>
+      <PageHeader
+        title={isMaster ? 'Master Admin Dashboard' : 'Dashboard'}
+        subtitle={
+          isMaster
+            ? 'Overview of users you have created'
+            : 'Your batches, students, and remaining capacity'
+        }
+      />
 
-            <div className="w-full h-full flex flex-col gap-4 mx-4">
-                <div
-                    onClick={() => {
-                        navigate("/student")
-                    }}
-                    className="w-full cursor-pointer flex rounded-md shadow-md px-8 py-6 bg-blue-100 border border-blue-700 items-center justify-between">
-                    <span className="flex items-start gap-4 justify-between flex-col">
-                        <p className="text-start">Total Students</p>
-                        <p className="text-start">{_dashboard?.data?.students}</p>
-                    </span>
-                    <Users2Icon className="w-16 h-16" />
-                </div>
-                <div
-                    onClick={() => {
-                        navigate("/batch")
-                    }}
-                    className="w-full cursor-pointer flex rounded-md shadow-md px-8 py-6 bg-blue-100 border border-blue-700 items-center justify-between">
-                    <span className="flex items-start gap-4 justify-between flex-col">
-                        <p className="text-start">Total Batches</p>
-                        <p className="text-start">{_dashboard?.data?.batches}</p>
-                    </span>
-                    <NewspaperIcon className="w-16 h-16" />
-                </div>
-
-                <div
-                    onClick={() => {
-                        navigate("/batch")
-                    }}
-                    className="w-full cursor-pointer flex rounded-md shadow-md px-8 py-6 bg-blue-100 border border-blue-700 items-center justify-between">
-                    <span className="flex items-start gap-4 justify-between flex-col">
-                        <p className="text-start">Remaining Batches</p>
-                        <p className="text-start">{20 - _dashboard?.data?.batches}</p>
-                    </span>
-                    <StampIcon className="w-16 h-16" />
-                </div>
-            </div>
+      {isMaster && dashboard?.role === 'MasterAdmin' ? (
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <StatCard
+            label="Total users"
+            value={dashboard.totalUsers}
+            icon={Users2}
+            accent="indigo"
+            onClick={() => navigate('/users')}
+          />
+          <StatCard
+            label="Admins"
+            value={dashboard.admins}
+            icon={UserCog}
+            accent="emerald"
+            onClick={() => navigate('/users')}
+          />
+          <StatCard
+            label="Master admins"
+            value={dashboard.masterAdmins}
+            icon={Shield}
+            accent="violet"
+            onClick={() => navigate('/users')}
+          />
         </div>
-    );
+      ) : dashboard?.role === 'Admin' ? (
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            label="Students"
+            value={dashboard.students}
+            icon={Users2}
+            accent="indigo"
+            onClick={() => navigate('/student')}
+          />
+          <StatCard
+            label="Batches"
+            value={dashboard.batches}
+            icon={Layers}
+            accent="emerald"
+            onClick={() => navigate('/batch')}
+          />
+          <StatCard
+            label="Remaining batches"
+            value={dashboard.remainingBatches}
+            icon={StampIcon}
+            accent="amber"
+          />
+          <StatCard
+            label="Max students / batch"
+            value={dashboard.maxStudentsPerBatch}
+            icon={UserCog}
+            accent="violet"
+          />
+        </div>
+      ) : null}
+
+      <div className="mt-10 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h3 className="font-semibold text-slate-900">Quick tips</h3>
+        <ul className="mt-3 space-y-2 text-sm text-slate-600">
+          {isMaster ? (
+            <>
+              <li>• Create Admins with batch and student limits from the Users page.</li>
+              <li>• You only see users that you created.</li>
+            </>
+          ) : (
+            <>
+              <li>• Create batches first, then register students with fingerprint capture.</li>
+              <li>• Install MFS100 drivers from the header before scanning.</li>
+            </>
+          )}
+        </ul>
+      </div>
+    </div>
+  );
 }
 
 export default DashboardHome;

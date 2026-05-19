@@ -16,6 +16,7 @@ const initialModalState = {
         name: "",
     },
 };
+
 const Batch = () => {
     const [modal, setModal] = useState(initialModalState);
 
@@ -25,23 +26,14 @@ const Batch = () => {
     });
 
     async function fetchData() {
-        setNews(prev => ({
-            ...prev,
-            loading: true
-        }))
+        setNews(prev => ({ ...prev, loading: true }))
         try {
             const res: any = await Api.get("api/batch")
-            setNews(prev => ({
-                ...prev,
-                data: res.data.data
-            }))
-        } catch (error) {
-
+            setNews(prev => ({ ...prev, data: res.data.data }))
+        } catch {
+            toast.error("Failed to load batches");
         } finally {
-            setNews(prev => ({
-                ...prev,
-                loading: false
-            }))
+            setNews(prev => ({ ...prev, loading: false }))
         }
     }
 
@@ -49,56 +41,73 @@ const Batch = () => {
         fetchData()
     }, [])
 
+    function closeModal() {
+        setModal(initialModalState);
+    }
 
     function renderModal() {
         const { state, edit_id, data } = modal;
 
         return (
             <Modal
-                title="Add Batch"
+                title={edit_id ? "Edit batch" : "Create batch"}
                 open={state}
-                setOpen={() => setModal(initialModalState)}
+                setOpen={(open) => !open && closeModal()}
             >
                 <Formik
                     initialValues={data}
+                    enableReinitialize
                     onSubmit={async (values: any, action: any) => {
-
                         try {
                             if (edit_id) {
                                 const res = await Api.patch(`api/batch/${edit_id}`, values);
-                                if (res) toast.success(res.data.message);
+                                toast.success(res.data.message);
                                 fetchData()
-                                setModal(initialModalState);
+                                closeModal();
                             } else {
                                 const res = await Api.post(`api/batch`, values);
-                                if (res) toast.success(res.data.message);
+                                toast.success(res.data.message);
                                 setNews((prev: any) => ({
                                     ...prev,
                                     data: [...prev.data, res.data.data],
                                 }));
-                                setModal(initialModalState);
+                                closeModal();
                             }
                         } catch (error: any) {
-                            toast.error(error.response.data.message);
+                            toast.error(error.response?.data?.message ?? "Request failed");
                         } finally {
-                            action.resetForm();
                             action.setSubmitting(false);
                         }
                     }}
                 >
                     {(formik: any) => (
-                        <form
-                            onSubmit={formik.handleSubmit}
-                            className="w-full pt-4 rounded-b-md pb-8 flex flex-col gap-4 px-4 bg-white"
-                        >
-                            <Input name="name" label="Name" placeholder="Batch name" type="text" required onChange={formik.handleChange} value={formik.values.name} />
-                            <Button
-                                disabled={formik.isSubmitting}
-                                size={"lg"}
-                                type={"submit"}
-                            >
-                                {modal.edit_id ? "Update" : "Create"}
-                            </Button>
+                        <form onSubmit={formik.handleSubmit} className="space-y-5">
+                            <Input
+                                name="name"
+                                label="Batch name"
+                                placeholder="e.g. Morning batch 2025"
+                                type="text"
+                                required
+                                onChange={formik.handleChange}
+                                value={formik.values.name}
+                            />
+                            <div className="flex gap-3 pt-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="flex-1"
+                                    onClick={closeModal}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    disabled={formik.isSubmitting}
+                                    className="flex-1"
+                                    type="submit"
+                                >
+                                    {edit_id ? "Save changes" : "Create batch"}
+                                </Button>
+                            </div>
                         </form>
                     )}
                 </Formik>
@@ -108,53 +117,56 @@ const Batch = () => {
 
     const columns = () => [
         {
-            Header: "Sr.No",
+            Header: "#",
             accessor: "d",
             Cell: (cell: any) => (
-                cell.row.index + 1
+                <span className="font-medium text-slate-400">{cell.row.index + 1}</span>
             )
         },
         {
             Header: "Name",
             accessor: "name",
+            Cell: (cell: any) => (
+                <span className="font-semibold text-slate-900">{cell.value}</span>
+            )
         },
         {
-            Header: "no of students",
+            Header: "Students",
             accessor: "_count.students",
+            Cell: (cell: any) => (
+                <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-700">
+                    {cell.value ?? 0}
+                </span>
+            )
         },
         {
-            Header: "Action",
+            Header: "Actions",
             accessor: "action",
             Cell: (cell: any) => (
-                <span className="flex items-center justify-start gap-4">
+                <span className="flex items-center gap-2">
                     <Badge onClick={() => {
-                        setModal((prev) => ({
-                            ...prev,
+                        setModal({
                             state: true,
                             edit_id: cell.row.original.id,
-                            data: cell.row.original,
-                        }));
+                            data: { name: cell.row.original.name },
+                        });
                     }} type={enums.GREEN}>
                         Edit
                     </Badge>
                     <Badge
                         onClick={async () => {
-                            const confirm = window.confirm("Are you sure you want to delete this?");
+                            if (!window.confirm("Delete this batch and all its students?")) return;
                             try {
-                                if (confirm) {
-                                    const res = await Api.delete(`api/batch/${cell.row.original.id}`);
-                                    if (res) toast.success(res.data.message);
-                                    setNews((prev: any) => ({
-                                        ...prev,
-                                        data: prev.data?.filter((n: any) => n.id !== cell.row.original.id),
-                                    }));
-                                }
-
+                                const res = await Api.delete(`api/batch/${cell.row.original.id}`);
+                                toast.success(res.data.message);
+                                setNews((prev: any) => ({
+                                    ...prev,
+                                    data: prev.data?.filter((n: any) => n.id !== cell.row.original.id),
+                                }));
                             } catch (error: any) {
-                                toast.error(error.response.data.message);
+                                toast.error(error.response?.data?.message ?? "Delete failed");
                             }
-                        }
-                        }
+                        }}
                         type={enums.RED}
                     >
                         Delete
@@ -164,24 +176,30 @@ const Batch = () => {
         },
     ];
 
-    return <>
-        {renderModal()}
-        {news.loading ? <Loader /> : <Table
-            btnText={"Add Batch"}
-            btnfunc={() =>
-                setModal((prev) => ({
-                    ...prev,
-                    state: true,
-                    data: initialModalState.data,
-                }))
-            }
-            title="Batch"
-            subtitle={"List of all the batchs"}
-            dataName={"Batchs"}
-            data={news.data}
-            columns={columns()}
-        />}
-    </>
+    return (
+        <>
+            {renderModal()}
+            {news.loading ? (
+                <Loader />
+            ) : (
+                <Table
+                    btnText="Add batch"
+                    btnfunc={() =>
+                        setModal({
+                            state: true,
+                            edit_id: "",
+                            data: initialModalState.data,
+                        })
+                    }
+                    title="Batches"
+                    subtitle="Create and manage your training batches"
+                    dataName="batches"
+                    data={news.data}
+                    columns={columns()}
+                />
+            )}
+        </>
+    );
 }
 
 export default Batch

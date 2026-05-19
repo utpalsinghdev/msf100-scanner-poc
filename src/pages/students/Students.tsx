@@ -6,32 +6,26 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 
+const fingerStyle = {
+    filter: 'invert(55%) sepia(25%) saturate(400%) hue-rotate(200deg)',
+};
 
 const Students = () => {
     const navigate = useNavigate()
     const [news, setNews] = useState({
         loading: true,
-        data: [],
+        data: [] as any[],
     });
 
     async function fetchData() {
-        setNews(prev => ({
-            ...prev,
-            loading: true
-        }))
+        setNews(prev => ({ ...prev, loading: true }))
         try {
             const res: any = await Api.get("api/student")
-            setNews(prev => ({
-                ...prev,
-                data: res.data.data
-            }))
-        } catch (error) {
-
+            setNews(prev => ({ ...prev, data: res.data.data }))
+        } catch {
+            toast.error("Failed to load students");
         } finally {
-            setNews(prev => ({
-                ...prev,
-                loading: false
-            }))
+            setNews(prev => ({ ...prev, loading: false }))
         }
     }
 
@@ -39,113 +33,74 @@ const Students = () => {
         fetchData()
     }, [])
 
-
-
+    const FingerThumb = ({ src }: { src: string }) => (
+        <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg bg-slate-50 ring-1 ring-slate-200">
+            <img
+                style={fingerStyle}
+                draggable={false}
+                src={`data:image/png;base64,${src}`}
+                className="h-full w-full object-contain"
+                alt="fingerprint"
+            />
+        </div>
+    );
 
     const columns = () => [
         {
-            Header: "Sr.No",
+            Header: "#",
             accessor: "d",
             Cell: (cell: any) => (
-                cell.row.index + 1
+                <span className="font-medium text-slate-400">{cell.row.index + 1}</span>
             )
         },
         {
             Header: "Name",
             accessor: "name",
+            Cell: (cell: any) => (
+                <span className="font-semibold text-slate-900">{cell.value}</span>
+            )
         },
         {
-            Header: "batch",
+            Header: "Batch",
             accessor: "batch.name",
-        },
-        {
-            Header: "finger1",
-            accessor: "finger1",
             Cell: (cell: any) => (
-                <img style={{
-                    filter: 'invert(100%) brightness(80%)',
-                    mixBlendMode: 'hard-light'
-
-                }} draggable={false} src={`data:image/png;base64,${cell.row.original.finger1}`} className="w-24" alt='inf' />
+                <span className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-700">
+                    {cell.row.original.batch?.name}
+                </span>
             )
         },
-        {
-            Header: "finger2",
-            accessor: "finger2",
+        ...[1, 2, 3, 4, 5].map((n) => ({
+            Header: `F${n}`,
+            accessor: `finger${n}`,
             Cell: (cell: any) => (
-                <img style={{
-                    filter: 'invert(100%) brightness(80%)',
-                    mixBlendMode: 'hard-light'
-
-                }} draggable={false} src={`data:image/png;base64,${cell.row.original.finger2}`} className="w-20" alt='inf' />
+                cell.value ? <FingerThumb src={cell.value} /> : <span className="text-slate-300">—</span>
             )
-        },
+        })),
         {
-            Header: "finger3",
-            accessor: "finger3",
-            Cell: (cell: any) => (
-                <img style={{
-                    filter: 'invert(100%) brightness(80%)',
-                    mixBlendMode: 'hard-light'
-
-                }} draggable={false} src={`data:image/png;base64,${cell.row.original.finger3}`} className="w-20" alt='inf' />
-            )
-        },
-        {
-            Header: "finger4",
-            accessor: "finger4",
-            Cell: (cell: any) => (
-                <img style={{
-                    filter: 'invert(100%) brightness(80%)',
-                    mixBlendMode: 'hard-light'
-
-                }} draggable={false} src={`data:image/png;base64,${cell.row.original.finger4}`} className="w-20" alt='inf' />
-            )
-        },
-        {
-            Header: "finger5",
-            accessor: "finger5",
-            Cell: (cell: any) => (
-                <img style={{
-                    filter: 'invert(100%) brightness(80%)',
-                    mixBlendMode: 'hard-light'
-
-                }} draggable={false} src={`data:image/png;base64,${cell.row.original.finger5}`} className="w-20" alt='inf' />
-            )
-        },
-        {
-            Header: "Action",
+            Header: "Actions",
             accessor: "action",
             Cell: (cell: any) => (
-                <span className="flex items-center justify-start gap-4">
-                    <Badge onClick={() => {
-                        navigate(`/view-student/${cell.row.original.id}`)
-                    }} type={enums.BLUE}>
+                <span className="flex items-center gap-2">
+                    <Badge onClick={() => navigate(`/view-student/${cell.row.original.id}`)} type={enums.BLUE}>
                         View
                     </Badge>
-                    <Badge onClick={() => {
-                        navigate(`/student/${cell.row.original.id}`)
-                    }} type={enums.GREEN}>
+                    <Badge onClick={() => navigate(`/student/${cell.row.original.id}`)} type={enums.GREEN}>
                         Edit
                     </Badge>
                     <Badge
                         onClick={async () => {
-                            const confirm = window.confirm("Are you sure you want to delete this?");
+                            if (!window.confirm("Delete this student?")) return;
                             try {
-                                if (confirm) {
-                                    const res = await Api.delete(`api/student/${cell.row.original.id}`);
-                                    if (res) toast.success(res.data.message);
-                                    setNews((prev: any) => ({
-                                        ...prev,
-                                        data: prev.data?.filter((n: any) => n.id !== cell.row.original.id),
-                                    }));
-                                }
-
+                                const res = await Api.delete(`api/student/${cell.row.original.id}`);
+                                toast.success(res.data.message);
+                                setNews((prev) => ({
+                                    ...prev,
+                                    data: prev.data?.filter((n) => n.id !== cell.row.original.id),
+                                }));
                             } catch (error: any) {
-                                toast.error(error.response.data.message);
+                                toast.error(error.response?.data?.message ?? "Delete failed");
                             }
-                        }
-                        }
+                        }}
                         type={enums.RED}
                     >
                         Delete
@@ -155,19 +110,19 @@ const Students = () => {
         },
     ];
 
-    return <>
-        {news.loading ? <Loader /> : <Table
-            btnText={"Add Student"}
-            btnfunc={() =>
-                navigate("/student/add")
-            }
-            title="Student"
-            subtitle={"List of all the students"}
-            dataName={"students"}
+    return news.loading ? (
+        <Loader />
+    ) : (
+        <Table
+            btnText="Add student"
+            btnfunc={() => navigate("/student/add")}
+            title="Students"
+            subtitle="Registered students with captured fingerprints"
+            dataName="students"
             data={news.data}
             columns={columns()}
-        />}
-    </>
+        />
+    );
 }
 
 export default Students

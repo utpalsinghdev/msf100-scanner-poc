@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { cn as classNames } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import React from "react";
 import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
 import {
@@ -9,7 +9,6 @@ import {
   useSortBy,
   usePagination,
 } from "react-table";
-
 import {
   SortIcon,
   SortUpIcon,
@@ -17,12 +16,17 @@ import {
 } from "../../assets/icons/sorting";
 import { useAsyncDebounce } from "../../hooks/use_debounce";
 import { Button } from "./button";
-export function PageButton({ children, className, ...rest }: any) {
+import { Plus } from "lucide-react";
+
+export function PageButton({ children, className, disabled, ...rest }: any) {
   return (
     <button
       type="button"
-      className={classNames(
-        "relative inline-flex items-center justify-center px-4 py-2 active:bg-gray-200 bg-white border border-gray-300 rounded-md  active:border-gray-300 text-sm font-medium text-gray-500 hover:bg-gray-100",
+      disabled={disabled}
+      className={cn(
+        "inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition",
+        "hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700",
+        "disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-slate-200 disabled:hover:bg-white disabled:hover:text-slate-700",
         className
       )}
       {...rest}
@@ -32,34 +36,25 @@ export function PageButton({ children, className, ...rest }: any) {
   );
 }
 
-
-
-function GlobalFilter({
-  //   preGlobalFilteredRows,
-  globalFilter,
-  setGlobalFilter,
-  //   filterOption,
-}: any) {
-  //   const count = preGlobalFilteredRows.length;
+function GlobalFilter({ globalFilter, setGlobalFilter }: any) {
   const [value, setValue] = React.useState(globalFilter);
-  const onFilterChange = useAsyncDebounce((value: any) => {
-    setGlobalFilter(value || undefined);
+  const onFilterChange = useAsyncDebounce((val: any) => {
+    setGlobalFilter(val || undefined);
   }, 200);
+
   return (
-    <div className=" flex mt-2 w-full gap-2 items-center justify-start ">
-      <div className="flex items-center float-right lg:w-[30%] sm:w-6/12 border rounded-md px-2 border-gray-300 ">
-        <MagnifyingGlassIcon className="w-5 h-5 text-gray-400" />
-        <input
-          type="text"
-          className="border-none flex-1 py-2 outline-none focus:outline-none focus:border-none w-40 focus:ring-0 focus:ring-opacity-50 sm:w-60 md:w-80 lg:w-96 xl:w-96 2xl:w-96"
-          value={value || ""}
-          onChange={(e) => {
-            setValue(e.target.value);
-            onFilterChange(e.target.value);
-          }}
-          placeholder={`search`}
-        />
-      </div>
+    <div className="relative w-full max-w-md">
+      <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+      <input
+        type="text"
+        className="h-10 w-full rounded-xl border border-slate-200 bg-white py-2 pl-10 pr-4 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+        value={value || ""}
+        onChange={(e) => {
+          setValue(e.target.value);
+          onFilterChange(e.target.value);
+        }}
+        placeholder="Search records…"
+      />
     </div>
   );
 }
@@ -67,7 +62,6 @@ function GlobalFilter({
 function Table({
   columns,
   data,
-  filterOptions,
   btnText,
   title,
   subtitle,
@@ -84,231 +78,170 @@ function Table({
     page,
     canPreviousPage,
     canNextPage,
-    // pageCount,
     gotoPage,
     nextPage,
     previousPage,
-    preGlobalFilteredRows,
     setGlobalFilter,
     setPageSize,
   }: any = useTable(
-    {
-      columns,
-      data,
-      // initialState: { pageIndex: 1 },
-    },
-    useFilters, // useFilters!
+    { columns, data },
+    useFilters,
     useGlobalFilter,
     useSortBy,
-    usePagination // new
+    usePagination
   );
 
-  const isMobile = true;
-
   return (
-    <div className="text-left  bg-white rounded-md border overflow-hidden">
-      {/* SEARCH UI */}
-      <div className="px-4 py-4 border-b border-gray-300 w-full  flex items-center justify-between">
+    <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+      {/* Header */}
+      <div className="flex flex-col gap-4 border-b border-slate-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className=" flex item text-2xl font-medium text-gray-900">
-            {title}{" "}
-            <span className=" ml-2 text-xs flex items-center py-[2px] px-2 rounded-full bg-red-50 text-red-500">
+          <div className="flex flex-wrap items-center gap-3">
+            <h2 className="text-xl font-bold text-slate-900">{title}</h2>
+            <span className="inline-flex items-center rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-semibold text-indigo-700 ring-1 ring-indigo-100">
               {data.length} {dataName}
             </span>
-          </h1>
-          <span className="hidden md:flex text-sm text-gray-500">
-            {subtitle}
-          </span>
-        </div>
-        <div>
-          {btnText && (
-            <Button size={"lg"} type="button" onClick={btnfunc}>
-              {btnText}
-            </Button>
+          </div>
+          {subtitle && (
+            <p className="mt-1 text-sm text-slate-500">{subtitle}</p>
           )}
         </div>
+        {btnText && (
+          <Button onClick={btnfunc} className="shrink-0 gap-2">
+            <Plus className="h-4 w-4" />
+            {btnText}
+          </Button>
+        )}
       </div>
-      <div className="flex px-4 items-center justify-between mb-4">
+
+      {/* Search */}
+      <div className="border-b border-slate-50 px-6 py-4">
         <GlobalFilter
-          filterOption={filterOptions}
-          preGlobalFilteredRows={preGlobalFilteredRows}
           globalFilter={state.globalFilter}
           setGlobalFilter={setGlobalFilter}
         />
-        {headerGroups?.map((headerGroup: any) =>
-          headerGroup.headers?.map((column: any) =>
-            column.Filter ? (
-              <div className="mt-2 sm:mt-0" key={column.title}>
-                {column.render("Filter")}
-              </div>
-            ) : null
-          )
-        )}
       </div>
-      {/* TABLE UI */}
-      <div className="mt-2 flex flex-col">
-        <div className="-my-2 overflow-x-auto  sm:-mx-6 lg:-mx-8">
-          <div className=" align-middle inline-block min-w-full sm:px-6 lg:px-8">
-            <div className={`shadow overflow-hidden border-b border-gray-200 `}>
-              <table
-                {...getTableProps()}
-                className="min-w-full divide-y divide-gray-200"
-              >
-                <thead>
-                  {headerGroups?.map((headerGroup: any) => (
-                    <tr
-                      key={headerGroup}
-                      {...headerGroup.getHeaderGroupProps()}
-                    >
-                      {headerGroup.headers?.map((column: any, columnIndex: any) => {
-                        if (
-                          isMobile ||
-                          columnIndex === 0 ||
-                          columnIndex === headerGroup.headers.length - 1
-                        ) {
-                          return (
-                            <th
-                              key={column}
-                              scope="col"
-                              className={`group px-6 py-3 border border-white bg-gray-500 text-left text-xs font-medium text-white uppercase tracking-wider `}
-                              {...column.getHeaderProps(
-                                column.getSortByToggleProps()
-                              )}
-                            >
-                              <div className="flex items-center justify-between ">
-                                {column.render("Header")}
-                                <span>
-                                  {column.isSorted ? (
-                                    column.isSortedDesc ? (
-                                      <SortDownIcon className="w-4 h-4 text-gray-400" />
-                                    ) : (
-                                      <SortUpIcon className="w-4 h-4 text-gray-400" />
-                                    )
-                                  ) : (
-                                    <SortIcon className="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100" />
-                                  )}
-                                </span>
-                              </div>
-                            </th>
-                          );
-                        }
-                        return null;
-                      })}
-                    </tr>
-                  ))}
-                </thead>
-                <tbody
-                  {...getTableBodyProps()}
-                  className="divide-y divide-gray-200"
-                >
-                  {page?.map((row: any,) => {
-                    prepareRow(row);
-                    return (
-                      <tr key={row} {...row.getRowProps()} className="bg-white">
-                        {row.cells?.map((cell: any, cellIndex: any) => {
-                          if (
-                            isMobile ||
-                            cellIndex === 0 ||
-                            cellIndex === row.cells.length - 1
-                          ) {
-                            return (
-                              <td
-                                key={cell}
-                                {...cell.getCellProps()}
-                                className="px-6 py-4 bg-gray-100  border border-white text-md font-medium text-black"
-                                role="cell"
-                              >
-                                {cell.column.Cell.name === "defaultRenderer" ? (
-                                  <div className="text-sm text-gray-500">
-                                    {cell.render("Cell")}
-                                  </div>
-                                ) : (
-                                  cell.render("Cell")
-                                )}
-                              </td>
-                            );
-                          }
-                          return null;
-                        })}
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-      <br />
-      {/* Pagination */}
 
-      <nav className="flex items-center pb-4 justify-between sm:px-0 pagBackground">
-        <div className="px-4 flex flex-1 w-0 ">
-          <p className="inline-flex flex-col items-center pr-1 text-sm font-medium border-transparent">
-            <div className="hidden md:inline-block lg:inline-block">
-              <span>
-                Page{" "}
-                <span>
-                  {state.pageIndex + 1} of {pageOptions.length}
-                </span>{" "}
-                <span className="ml-2">
-                  &nbsp; Go to : &nbsp;
-                  <input
-                    type="number"
-                    defaultValue={state.pageIndex + 1}
-                    onChange={(e) => {
-                      const page = e.target.value
-                        ? Number(e.target.value) - 1
-                        : 0;
-                      gotoPage(page);
-                    }}
-                    className="border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:ring-opacity-50 w-14"
-                  />
-                </span>
-                <span>
-                  <select
-                    className="form-select appearance-none
-                    border border-primary rounded-md ml-3 px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 w-[105px]"
-                    value={state.pageSize}
-                    onChange={(e) => {
-                      PageButton
-                      setPageSize(Number(e.target.value));
-                    }}
+      {/* Table */}
+      <div className="overflow-x-auto">
+        <table
+          {...getTableProps()}
+          className="min-w-full divide-y divide-slate-100"
+        >
+          <thead className="bg-slate-50/80">
+            {headerGroups?.map((headerGroup: any) => (
+              <tr key={headerGroup.id} {...headerGroup.getHeaderGroupProps()}>
+                {headerGroup.headers?.map((column: any) => (
+                  <th
+                    key={column.id}
+                    scope="col"
+                    className="group px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500"
+                    {...column.getHeaderProps(column.getSortByToggleProps())}
                   >
-                    {[10, 20, 30, 40, 50]?.map((pageSize) => (
-                      <option key={pageSize} value={pageSize}>
-                        Show {pageSize}
-                      </option>
+                    <div className="flex items-center justify-between gap-2">
+                      {column.render("Header")}
+                      <span className="text-slate-400">
+                        {column.isSorted ? (
+                          column.isSortedDesc ? (
+                            <SortDownIcon className="h-4 w-4" />
+                          ) : (
+                            <SortUpIcon className="h-4 w-4" />
+                          )
+                        ) : (
+                          <SortIcon className="h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100" />
+                        )}
+                      </span>
+                    </div>
+                  </th>
+                ))}
+              </tr>
+            ))}
+          </thead>
+          <tbody
+            {...getTableBodyProps()}
+            className="divide-y divide-slate-100 bg-white"
+          >
+            {page?.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={columns.length}
+                  className="px-6 py-16 text-center text-sm text-slate-500"
+                >
+                  No records found.
+                </td>
+              </tr>
+            ) : (
+              page?.map((row: any) => {
+                prepareRow(row);
+                return (
+                  <tr
+                    key={row.id}
+                    {...row.getRowProps()}
+                    className="transition-colors hover:bg-slate-50/60"
+                  >
+                    {row.cells?.map((cell: any) => (
+                      <td
+                        key={cell.column.id}
+                        {...cell.getCellProps()}
+                        className="whitespace-nowrap px-6 py-4 text-sm text-slate-700"
+                      >
+                        {cell.render("Cell")}
+                      </td>
                     ))}
-                  </select>
-                </span>
-              </span>
-            </div>
-          </p>
-        </div>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
 
-        <div className=" px-4 flex justify-end gap-2 flex-1 w-0 ">
-          <PageButton
-            onClick={() => {
-              previousPage();
-            }}
-            className="pagButton"
-            disabled={!canPreviousPage}
-          >
-            Previous
-          </PageButton>
+      {/* Pagination */}
+      {pageOptions.length > 1 && (
+        <nav className="flex flex-col gap-4 border-t border-slate-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
+            <span>
+              Page <strong className="text-slate-900">{state.pageIndex + 1}</strong> of{" "}
+              <strong className="text-slate-900">{pageOptions.length}</strong>
+            </span>
+            <span className="hidden sm:inline text-slate-300">|</span>
+            <label className="flex items-center gap-2">
+              Go to
+              <input
+                type="number"
+                min={1}
+                max={pageOptions.length}
+                defaultValue={state.pageIndex + 1}
+                onChange={(e) => {
+                  const page = e.target.value ? Number(e.target.value) - 1 : 0;
+                  gotoPage(page);
+                }}
+                className="h-9 w-14 rounded-lg border border-slate-200 px-2 text-center text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+              />
+            </label>
+            <select
+              className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+              value={state.pageSize}
+              onChange={(e) => setPageSize(Number(e.target.value))}
+            >
+              {[10, 20, 30, 40, 50].map((pageSize) => (
+                <option key={pageSize} value={pageSize}>
+                  Show {pageSize}
+                </option>
+              ))}
+            </select>
+          </div>
 
-          <PageButton
-            onClick={() => {
-              nextPage();
-            }}
-            disabled={!canNextPage}
-            className="pagButton"
-          >
-            Next
-          </PageButton>
-        </div>
-      </nav>
+          <div className="flex gap-2">
+            <PageButton onClick={() => previousPage()} disabled={!canPreviousPage}>
+              Previous
+            </PageButton>
+            <PageButton onClick={() => nextPage()} disabled={!canNextPage}>
+              Next
+            </PageButton>
+          </div>
+        </nav>
+      )}
     </div>
   );
 }

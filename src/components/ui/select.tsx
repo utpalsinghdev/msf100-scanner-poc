@@ -1,62 +1,48 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { cn } from "@/lib/utils";
-import { ExclamationCircleIcon } from "@heroicons/react/20/solid";
 import { Label } from "./label";
-function Select(props: any) {
-  const {
-    id,
-    label,
-    name,
-    error,
-    required,
-    className,
-    children,
-    ...rest
-  } = props;
+
+type SelectProps = React.SelectHTMLAttributes<HTMLSelectElement> & {
+  label?: string;
+  error?: string | null;
+};
+
+function Select({
+  id,
+  label,
+  name,
+  error,
+  required,
+  className,
+  children,
+  ...rest
+}: SelectProps) {
   return (
     <div className="w-full">
-      <Label className="ml-1 flex flex-row gap-0 w-full">
-        {label}{" "}
-      </Label>
-      <div className="relative mt-2 rounded-md shadow-sm">
-        <select
-          id={id || name}
-          name={name}
-          required={required}
-          className={cn(
-            "block w-full rounded-md text-black border-0 py-2 pl-8  ring-1 ring-gray-300 ring-inset  ",
-            error
-              ? "ring-red-300  focus:ring-2 focus:ring-inset focus:ring-red-500"
-              : "ring-gray-300  focus:ring-2 focus:ring-inset focus:ring-black",
-            className
-          )}
-          {...rest}
-        >
-          {children}
-        </select>
-      </div>
+      {label && (
+        <Label className="mb-1.5 block text-sm font-medium text-slate-700">
+          {label}
+        </Label>
+      )}
+      <select
+        id={id || name}
+        name={name}
+        required={required}
+        className={cn(
+          "block h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 shadow-sm transition-colors",
+          "hover:border-slate-300",
+          "focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20",
+          error && "border-red-300 focus:ring-red-500/20",
+          className
+        )}
+        {...rest}
+      >
+        {children}
+      </select>
       {error && (
-        <p className=" text-sm text-red-600" id="error">
-          {error}
-        </p>
+        <p className="mt-1 text-xs font-medium text-red-600">{error}</p>
       )}
     </div>
   );
 }
-Select.defaultProps = {
-  id: "name",
-  label: "Email",
-  placeholder: "Enter Your Email Address",
-  type: "text",
-  name: "name",
-  error: null,
-  required: false,
-  icon: (
-    <ExclamationCircleIcon
-      className="h-5 w-5 text-indigo-500"
-      aria-hidden="true"
-    />
-  ),
-};
 
 export default Select;

@@ -9,22 +9,25 @@ export interface TextareaProps
 }
 
 const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({ className, ...props }, ref) => {
+  ({ className, label, ...props }, ref) => {
     return (
-      <>
-        <Label className="ml-1 flex flex-row font-bold text-md gap-0 w-full">
-          {props.label}{" "}
-        </Label>
+      <div className="flex w-full flex-col gap-1.5">
+        {label && (
+          <Label className="text-sm font-medium text-slate-700">{label}</Label>
+        )}
         <textarea
           className={cn(
-            "flex min-h-[80px] w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-800 dark:bg-gray-950 dark:ring-offset-gray-950 dark:placeholder:text-gray-400 dark:focus-visible:ring-gray-300",
+            "flex min-h-[100px] w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-sm transition-colors",
+            "placeholder:text-slate-400",
+            "hover:border-slate-300",
+            "focus-visible:border-indigo-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/20",
+            "disabled:cursor-not-allowed disabled:bg-slate-50 disabled:opacity-60",
             className
           )}
           ref={ref}
           {...props}
         />
-      </>
-
+      </div>
     )
   }
 )

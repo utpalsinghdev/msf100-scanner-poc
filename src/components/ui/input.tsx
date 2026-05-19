@@ -12,25 +12,28 @@ export interface InputProps
 }
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, boxSize = "w-full", type, ...props }, ref) => {
+  ({ className, boxSize = "w-full", type, label, isError, errorText, ...props }, ref) => {
     return (
-      <div className={cn("flex flex-col items-start gap-1", boxSize)}>
-        <Label className="ml-1 flex flex-row font-bold text-md gap-0 w-full">
-          {props.label}{" "}
-        </Label>
+      <div className={cn("flex flex-col items-start gap-1.5", boxSize)}>
+        {label && (
+          <Label className="text-sm font-medium text-slate-700">{label}</Label>
+        )}
         <input
           type={type}
           className={cn(
-            "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+            "flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 shadow-sm transition-colors",
+            "placeholder:text-slate-400",
+            "hover:border-slate-300",
+            "focus-visible:border-indigo-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/20",
+            "disabled:cursor-not-allowed disabled:bg-slate-50 disabled:opacity-60",
+            isError && "border-red-300 focus-visible:ring-red-500/20",
             className
           )}
           ref={ref}
           {...props}
         />
-        {props.isError && (
-          <Label className="ml-1 font-normal text-red-500">
-            {props.errorText}{" "}
-          </Label>
+        {isError && errorText && (
+          <p className="text-xs font-medium text-red-600">{errorText}</p>
         )}
       </div>
     );
