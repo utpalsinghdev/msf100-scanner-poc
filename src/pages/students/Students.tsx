@@ -7,10 +7,7 @@ import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { canPerform } from "@/lib/permissions";
-
-const fingerStyle = {
-    filter: 'invert(55%) sepia(25%) saturate(400%) hue-rotate(200deg)',
-};
+import { FingerprintImage } from "@/components/ui/FingerprintImage";
 
 const Students = () => {
     const navigate = useNavigate()
@@ -35,18 +32,6 @@ const Students = () => {
     useEffect(() => {
         fetchData()
     }, [])
-
-    const FingerThumb = ({ src }: { src: string }) => (
-        <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg bg-slate-50 ring-1 ring-slate-200">
-            <img
-                style={fingerStyle}
-                draggable={false}
-                src={`data:image/png;base64,${src}`}
-                className="h-full w-full object-contain"
-                alt="fingerprint"
-            />
-        </div>
-    );
 
     const columns = () => [
         {
@@ -76,7 +61,11 @@ const Students = () => {
             Header: `F${n}`,
             accessor: `finger${n}`,
             Cell: (cell: any) => (
-                cell.value ? <FingerThumb src={cell.value} /> : <span className="text-slate-300">—</span>
+                cell.value ? (
+                    <FingerprintImage src={cell.value} className="rounded-lg" />
+                ) : (
+                    <span className="text-slate-300">—</span>
+                )
             )
         })),
         {
@@ -122,6 +111,7 @@ const Students = () => {
     return news.loading ? (
         <Loader />
     ) : (
+        <>
         <Table
             btnText={canPerform(user, 'add') ? "Add student" : undefined}
             btnfunc={canPerform(user, 'add') ? () => navigate("/student/add") : undefined}
@@ -131,6 +121,7 @@ const Students = () => {
             data={news.data}
             columns={columns()}
         />
+        </>
     );
 }
 

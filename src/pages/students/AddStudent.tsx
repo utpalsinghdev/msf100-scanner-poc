@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import Select from '@/components/ui/select';
 import { CaptureFinger } from '@/utiles/scanner'
+import { enhanceFingerprint } from '@/lib/enhanceFingerprint'
 import PageHeader from '@/components/ui/PageHeader';
 import FingerprintSlot from '@/components/ui/FingerprintSlot';
 import Loader from '@/components/ui/Loader';
@@ -46,12 +47,17 @@ const AddStudent = () => {
 
     async function getFingerPrint() {
         try {
-            const fprint = await CaptureFinger(1, 5000)
+            const fprint = await CaptureFinger(60, 5000)
             if (!fprint.httpStatus || !fprint.data?.BitmapData) {
                 toast.error("Fingerprint capture failed")
                 return
             }
-            return fprint.data.BitmapData
+            try {
+                return await enhanceFingerprint(fprint.data.BitmapData)
+            } catch {
+                toast.error("Enhancement failed — saved original scan")
+                return fprint.data.BitmapData
+            }
         } catch {
             toast.error("Scanner drivers not installed correctly")
         }

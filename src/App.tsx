@@ -16,6 +16,7 @@ const Students = lazy(() => import('@/pages/students/Students'));
 const AddStudent = lazy(() => import('@/pages/students/AddStudent'));
 const ViewStudent = lazy(() => import('@/pages/students/ViewStudent'));
 const Users = lazy(() => import('@/pages/users/Users'));
+const NotFound = lazy(() => import('@/pages/NotFound'));
 
 function ProtectedRoutes() {
   const { isAuthenticated } = useAuth();
@@ -52,10 +53,12 @@ function AppRoutes() {
                 { path: '/view-student/:id', element: <ViewStudent /> },
               ],
             },
+            { path: '*', element: <NotFound /> },
           ],
         },
       ],
     },
+    { path: '*', element: <NotFound /> },
   ]);
 
   return <RouterProvider router={routes} />;

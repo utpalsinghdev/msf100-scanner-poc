@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
+import { FingerprintImage } from '@/components/ui/FingerprintImage';
 import { cn } from '@/lib/utils';
-import { Fingerprint } from 'lucide-react';
 
 type FingerprintSlotProps = {
   label: string;
@@ -22,21 +22,7 @@ export default function FingerprintSlot({
           : 'border-slate-200 bg-slate-50/80 hover:border-slate-300',
       )}
     >
-      <div className="flex h-28 w-full items-center justify-center overflow-hidden rounded-xl bg-white ring-1 ring-slate-200/80">
-        {value ? (
-          <img
-            src={`data:image/png;base64,${value}`}
-            alt={label}
-            className="h-full max-h-28 w-auto object-contain"
-            style={{
-              filter: 'invert(55%) sepia(20%) saturate(500%) hue-rotate(200deg)',
-            }}
-            draggable={false}
-          />
-        ) : (
-          <Fingerprint className="h-14 w-14 text-slate-300" strokeWidth={1.5} />
-        )}
-      </div>
+      <FingerprintImage src={value} alt={label} showEmptyIcon />
       <Button
         type="button"
         variant={value ? 'secondary' : 'outline'}
