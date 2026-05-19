@@ -16,19 +16,23 @@ export default function PageHeader({
   return (
     <div
       className={cn(
-        'mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between',
+        'mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-end sm:justify-between',
         className,
       )}
     >
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+      <div className="min-w-0">
+        <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl lg:text-3xl">
           {title}
         </h1>
         {subtitle && (
           <p className="mt-1 text-sm text-slate-500 sm:text-base">{subtitle}</p>
         )}
       </div>
-      {action}
+      {action && (
+        <div className="w-full shrink-0 sm:w-auto [&_button]:w-full sm:[&_button]:w-auto">
+          {action}
+        </div>
+      )}
     </div>
   );
 }

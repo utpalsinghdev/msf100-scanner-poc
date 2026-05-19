@@ -19,7 +19,7 @@ export default function Login() {
   }, [isAuthenticated, navigate]);
 
   return (
-    <div className="min-h-screen gradient-login flex">
+    <div className="gradient-login flex min-h-screen min-h-[100dvh] flex-col lg:flex-row">
       <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-12 text-white">
         <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15 ring-1 ring-white/25">
@@ -52,8 +52,8 @@ export default function Login() {
         </p>
       </div>
 
-      <div className="flex flex-1 items-center justify-center p-6 sm:p-12">
-        <div className="glass-card w-full max-w-md p-8 sm:p-10">
+      <div className="flex flex-1 items-center justify-center p-4 pb-8 sm:p-8 lg:p-12">
+        <div className="glass-card w-full max-w-md p-6 sm:p-8 lg:p-10">
           <div className="mb-8 lg:hidden flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-white">
               <Fingerprint className="h-5 w-5" />

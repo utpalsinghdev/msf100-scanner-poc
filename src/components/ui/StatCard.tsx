@@ -29,7 +29,7 @@ export default function StatCard({
       onClick={onClick}
       disabled={!onClick}
       className={cn(
-        'group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-6 text-left shadow-sm transition-all',
+        'group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4 text-left shadow-sm transition-all sm:p-6',
         onClick && 'hover:-translate-y-0.5 hover:shadow-lg cursor-pointer',
         !onClick && 'cursor-default',
       )}
@@ -37,7 +37,7 @@ export default function StatCard({
       <div className="flex items-start justify-between">
         <div>
           <p className="text-sm font-medium text-slate-500">{label}</p>
-          <p className="mt-2 text-3xl font-bold text-slate-900">{value}</p>
+          <p className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">{value}</p>
         </div>
         <div
           className={cn(

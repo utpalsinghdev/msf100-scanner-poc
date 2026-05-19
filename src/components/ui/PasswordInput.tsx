@@ -59,7 +59,7 @@ const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
               'hover:border-slate-300',
               'focus-visible:border-indigo-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/20',
               'disabled:cursor-not-allowed disabled:bg-slate-50 disabled:opacity-60',
-              showGenerate ? 'pl-3.5 pr-[4.5rem]' : 'pl-3.5 pr-11',
+              showGenerate ? 'pl-3.5 pr-[5.25rem] sm:pr-[4.5rem]' : 'pl-3.5 pr-11',
               className,
             )}
             {...props}

@@ -89,7 +89,7 @@ const AddStudent = () => {
                 }
             />
 
-            <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm sm:p-8">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-6 lg:p-8">
                 <Formik
                     initialValues={formState}
                     enableReinitialize

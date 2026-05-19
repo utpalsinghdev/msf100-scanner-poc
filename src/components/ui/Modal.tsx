@@ -33,12 +33,12 @@ export default function Modal({
           <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm" />
         </Transition.Child>
 
-        <div className="fixed inset-0 z-10 overflow-y-auto p-4 sm:p-6">
-          <div className="flex min-h-full items-center justify-center">
+        <div className="fixed inset-0 z-10 overflow-y-auto p-3 sm:p-6">
+          <div className="flex min-h-full items-end justify-center sm:items-center">
             <Transition.Child
               as={Fragment}
               enter="ease-out duration-200"
-              enterFrom="opacity-0 translate-y-4 sm:scale-95"
+              enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
               enterTo="opacity-100 translate-y-0 sm:scale-100"
               leave="ease-in duration-150"
               leaveFrom="opacity-100 translate-y-0 sm:scale-100"
@@ -46,25 +46,27 @@ export default function Modal({
             >
               <Dialog.Panel
                 className={cn(
-                  "relative w-full transform overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-2xl shadow-slate-900/10 transition-all",
+                  "relative flex max-h-[min(92vh,720px)] w-full flex-col transform overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-2xl shadow-slate-900/10 transition-all sm:max-h-[85vh]",
                   size,
                   className
                 )}
               >
-                <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
-                  <Dialog.Title className="text-lg font-semibold text-slate-900">
+                <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-4 py-3 sm:px-6 sm:py-4">
+                  <Dialog.Title className="pr-8 text-base font-semibold text-slate-900 sm:text-lg">
                     {title}
                   </Dialog.Title>
                   <button
                     type="button"
                     onClick={() => setOpen(false)}
-                    className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+                    className="absolute right-3 top-3 rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 sm:right-4 sm:top-4"
                   >
                     <span className="sr-only">Close</span>
                     <X className="h-5 w-5" />
                   </button>
                 </div>
-                <div className="px-6 py-5">{children}</div>
+                <div className="overflow-y-auto px-4 py-4 sm:px-6 sm:py-5">
+                  {children}
+                </div>
               </Dialog.Panel>
             </Transition.Child>
           </div>

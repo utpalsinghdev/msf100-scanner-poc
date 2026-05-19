@@ -51,7 +51,7 @@ const ViewStudent = () => {
             />
 
             <div className="grid gap-6 lg:grid-cols-3">
-                <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm lg:col-span-1">
+                <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-6 lg:col-span-1">
                     <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-400">
                         Details
                     </h3>
@@ -71,7 +71,7 @@ const ViewStudent = () => {
                     </dl>
                 </div>
 
-                <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm lg:col-span-2">
+                <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-6 lg:col-span-2">
                     <h3 className="mb-5 text-sm font-semibold uppercase tracking-wider text-slate-400">
                         Fingerprints
                     </h3>

@@ -107,7 +107,7 @@ function DashboardHome() {
         </div>
       ) : null}
 
-      <div className="mt-10 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:mt-10 sm:p-6">
         <h3 className="font-semibold text-slate-900">Quick tips</h3>
         <ul className="mt-3 space-y-2 text-sm text-slate-600">
           {isMaster ? (
