@@ -2,9 +2,7 @@ import { Button } from "@/components/ui/button"
 import Api from "@/lib/api"
 import PageHeader from "@/components/ui/PageHeader"
 import Loader from "@/components/ui/Loader"
-import EnhanceFingerprintsControl, {
-    type EnhancePasses,
-} from "@/components/students/EnhanceFingerprintsControl"
+import EnhanceFingerprintsControl from "@/components/students/EnhanceFingerprintsControl"
 import { ArrowLeft } from "lucide-react"
 import { useEffect, useState } from "react"
 import toast from "react-hot-toast"
@@ -36,14 +34,17 @@ const ViewStudent = () => {
         fetchStudent()
     }, [id])
 
-    async function enhanceRecorded(passes: EnhancePasses) {
+    async function enhanceRecordedAdvanced() {
         if (!id) return
         try {
-            const res = await Api.post(`api/student/${id}/enhance`, { passes })
+            const res = await Api.post(`api/student/${id}/enhance-advanced`)
             setData(res.data.data)
             toast.success(res.data.message)
-        } catch {
-            toast.error("Failed to enhance fingerprints")
+        } catch (err: unknown) {
+            const msg =
+                (err as { response?: { data?: { message?: string } } })?.response
+                    ?.data?.message ?? "Failed to enhance fingerprints"
+            toast.error(msg)
             throw new Error("enhance failed")
         }
     }
@@ -60,7 +61,10 @@ const ViewStudent = () => {
                 action={
                     <div className="flex flex-wrap gap-2">
                         {canPerform(user, 'edit') && (
-                            <EnhanceFingerprintsControl onEnhance={enhanceRecorded} />
+                            <EnhanceFingerprintsControl
+                                mode="advanced"
+                                onEnhance={enhanceRecordedAdvanced}
+                            />
                         )}
                         <Button variant="outline" onClick={() => navigate(-1)} className="gap-2">
                             <ArrowLeft className="h-4 w-4" />
