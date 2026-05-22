@@ -9,7 +9,6 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import Select from '@/components/ui/select';
 import { CaptureFinger } from '@/utiles/scanner'
-import { enhanceFingerprint } from '@/lib/enhanceFingerprint'
 import PageHeader from '@/components/ui/PageHeader';
 import FingerprintSlot from '@/components/ui/FingerprintSlot';
 import Loader from '@/components/ui/Loader';
@@ -52,12 +51,7 @@ const AddStudent = () => {
                 toast.error("Fingerprint capture failed")
                 return
             }
-            try {
-                return await enhanceFingerprint(fprint.data.BitmapData)
-            } catch {
-                toast.error("Enhancement failed — saved original scan")
-                return fprint.data.BitmapData
-            }
+            return fprint.data.BitmapData
         } catch {
             toast.error("Scanner drivers not installed correctly")
         }
