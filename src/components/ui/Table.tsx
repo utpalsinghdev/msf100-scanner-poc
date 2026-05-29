@@ -72,10 +72,22 @@ function MobileRowCard({ row, columns }: { row: any; columns: any[] }) {
       getHeaderLabel(c) === "Actions" ||
       getHeaderLabel(c) === "Action"
   );
-  const dataCols = columns.filter((c) => c !== actionCol);
+  const selectCol = columns.find((c) => c.accessor === "select");
+  const dataCols = columns.filter((c) => c !== actionCol && c !== selectCol);
 
   return (
     <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      {selectCol && (
+        <div className="mb-3 flex items-center gap-2 border-b border-slate-100 pb-3">
+          {row.cells
+            .find(
+              (c: any) =>
+                c.column === selectCol || c.column.accessor === "select",
+            )
+            ?.render("Cell")}
+          <span className="text-xs font-medium text-slate-500">Select</span>
+        </div>
+      )}
       <dl className="space-y-3">
         {dataCols.map((col) => {
           const colKey = col.id ?? col.accessor;
@@ -257,10 +269,13 @@ function Table({
                       key={column.id}
                       scope="col"
                       className="group whitespace-nowrap px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 sm:px-6"
-                      {...column.getHeaderProps(column.getSortByToggleProps())}
+                      {...column.getHeaderProps(
+                        column.disableSortBy ? {} : column.getSortByToggleProps(),
+                      )}
                     >
                       <div className="flex items-center justify-between gap-2">
                         {column.render("Header")}
+                        {!column.disableSortBy && (
                         <span className="text-slate-400">
                           {column.isSorted ? (
                             column.isSortedDesc ? (
@@ -272,6 +287,7 @@ function Table({
                             <SortIcon className="h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100" />
                           )}
                         </span>
+                        )}
                       </div>
                     </th>
                   ))}

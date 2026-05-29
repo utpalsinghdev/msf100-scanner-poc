@@ -12,6 +12,7 @@ import { CaptureFinger } from '@/utiles/scanner'
 import PageHeader from '@/components/ui/PageHeader';
 import FingerprintSlot from '@/components/ui/FingerprintSlot';
 import Loader from '@/components/ui/Loader';
+import MediaPickerModal from '@/components/media/MediaPickerModal';
 
 const initialState = {
     name: "",
@@ -34,6 +35,7 @@ const AddStudent = () => {
     const [formState, setFormState] = useState(initialState)
     const [batches, setBatches] = useState<{ id: string; name: string }[]>([])
     const [loading, setLoading] = useState(true)
+    const [browseFinger, setBrowseFinger] = useState<(typeof fingerKeys)[number] | null>(null)
 
     async function fetchBatches() {
         try {
@@ -112,6 +114,7 @@ const AddStudent = () => {
                     }}
                 >
                     {(formik) => (
+                        <>
                         <form onSubmit={formik.handleSubmit} className="space-y-8">
                             <section>
                                 <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-400">
@@ -168,7 +171,7 @@ const AddStudent = () => {
                                     </h3>
                                 </div>
                                 <p className="mb-5 text-sm text-slate-500">
-                                    Ensure MFS100 drivers are installed. Capture each finger in order.
+                                    Capture from the scanner or browse images uploaded in Media.
                                 </p>
                                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
                                     {fingerKeys.map((key, i) => (
@@ -183,6 +186,7 @@ const AddStudent = () => {
                                                     toast.success(`Finger ${i + 1} captured`)
                                                 }
                                             }}
+                                            onBrowse={() => setBrowseFinger(key)}
                                         />
                                     ))}
                                 </div>
@@ -209,6 +213,22 @@ const AddStudent = () => {
                                 </Button>
                             </div>
                         </form>
+
+                        <MediaPickerModal
+                            open={Boolean(browseFinger)}
+                            onClose={() => setBrowseFinger(null)}
+                            title={
+                                browseFinger
+                                    ? `Browse media for Finger ${browseFinger.replace('finger', '')}`
+                                    : 'Select from media'
+                            }
+                            onSelect={(image) => {
+                                if (!browseFinger) return
+                                formik.setFieldValue(browseFinger, image)
+                                toast.success(`Finger ${browseFinger.replace('finger', '')} selected from media`)
+                            }}
+                        />
+                        </>
                     )}
                 </Formik>
             </div>

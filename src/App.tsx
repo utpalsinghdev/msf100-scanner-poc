@@ -15,6 +15,7 @@ const Batch = lazy(() => import('@/pages/Batch'));
 const Students = lazy(() => import('@/pages/students/Students'));
 const AddStudent = lazy(() => import('@/pages/students/AddStudent'));
 const ViewStudent = lazy(() => import('@/pages/students/ViewStudent'));
+const Media = lazy(() => import('@/pages/Media'));
 const Users = lazy(() => import('@/pages/users/Users'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
 
@@ -48,6 +49,7 @@ function AppRoutes() {
               element: <RoleRoutes roles={['User', 'MasterAdmin']} />,
               children: [
                 { path: '/batch', element: <Batch /> },
+                { path: '/media', element: <Media /> },
                 { path: '/student', element: <Students /> },
                 { path: '/student/:event', element: <AddStudent /> },
                 { path: '/view-student/:id', element: <ViewStudent /> },

@@ -1,6 +1,6 @@
 /**
- * MFS100 stores scans as BMP base64; enhanced images are PNG base64.
- * Using the wrong MIME type (always png) can invert or corrupt colors in the browser.
+ * MFS100 stores scans as BMP base64. Some exports may be PNG or JPEG.
+ * Using the wrong MIME type can invert or corrupt colors in the browser.
  */
 export function fingerprintImageSrc(base64: string | undefined | null): string {
   if (!base64?.trim()) return '';

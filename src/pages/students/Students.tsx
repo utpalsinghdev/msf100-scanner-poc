@@ -2,7 +2,7 @@ import Badge, { enums } from "@/components/ui/Badge";
 import Loader from "@/components/ui/Loader";
 import Table from "@/components/ui/Table"
 import Api from "@/lib/api";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -10,7 +10,8 @@ import { canPerform } from "@/lib/permissions";
 import { FingerprintImage } from "@/components/ui/FingerprintImage";
 import { Button } from "@/components/ui/button";
 import { exportStudentsPdf, type StudentPdfRecord } from "@/lib/exportStudentsPdf";
-import { FileDown } from "lucide-react";
+import { exportStudentsZip } from "@/lib/exportStudentsZip";
+import { Archive, FileDown } from "lucide-react";
 
 const Students = () => {
     const navigate = useNavigate()
@@ -20,12 +21,41 @@ const Students = () => {
         data: [] as StudentPdfRecord[],
     });
     const [exporting, setExporting] = useState(false);
+    const [downloading, setDownloading] = useState(false);
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+    const selectedStudents = useMemo(
+        () => news.data.filter((student) => selectedIds.has(student.id)),
+        [news.data, selectedIds],
+    );
+
+    const allSelected =
+        news.data.length > 0 && news.data.every((student) => selectedIds.has(student.id));
+    const someSelected = selectedIds.size > 0 && !allSelected;
+
+    function toggleStudent(id: string) {
+        setSelectedIds((prev) => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
+            return next;
+        });
+    }
+
+    function toggleAll() {
+        if (allSelected) {
+            setSelectedIds(new Set());
+            return;
+        }
+        setSelectedIds(new Set(news.data.map((student) => student.id)));
+    }
 
     async function fetchData() {
         setNews(prev => ({ ...prev, loading: true }))
         try {
             const res: any = await Api.get("api/student")
             setNews(prev => ({ ...prev, data: res.data.data }))
+            setSelectedIds(new Set())
         } catch {
             toast.error("Failed to load students");
         } finally {
@@ -54,7 +84,49 @@ const Students = () => {
         }
     }
 
+    async function handleDownloadZip() {
+        if (selectedStudents.length === 0) {
+            toast.error("Select at least one student");
+            return;
+        }
+        setDownloading(true);
+        try {
+            await exportStudentsZip(selectedStudents);
+            toast.success("ZIP downloaded");
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : "Download failed";
+            toast.error(message);
+        } finally {
+            setDownloading(false);
+        }
+    }
+
     const columns = () => [
+        {
+            Header: () => (
+                <input
+                    type="checkbox"
+                    checked={allSelected}
+                    ref={(el) => {
+                        if (el) el.indeterminate = someSelected;
+                    }}
+                    onChange={toggleAll}
+                    aria-label="Select all students"
+                    className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                />
+            ),
+            accessor: "select",
+            disableSortBy: true,
+            Cell: (cell: any) => (
+                <input
+                    type="checkbox"
+                    checked={selectedIds.has(cell.row.original.id)}
+                    onChange={() => toggleStudent(cell.row.original.id)}
+                    aria-label={`Select ${cell.row.original.name}`}
+                    className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                />
+            ),
+        },
         {
             Header: "#",
             accessor: "d",
@@ -111,6 +183,11 @@ const Students = () => {
                             try {
                                 const res = await Api.delete(`api/student/${cell.row.original.id}`);
                                 toast.success(res.data.message);
+                                setSelectedIds((prev) => {
+                                    const next = new Set(prev);
+                                    next.delete(cell.row.original.id);
+                                    return next;
+                                });
                                 setNews((prev) => ({
                                     ...prev,
                                     data: prev.data?.filter((n) => n.id !== cell.row.original.id),
@@ -136,16 +213,32 @@ const Students = () => {
         <Table
             headerActions={
                 canPerform(user, 'view') ? (
-                    <Button
-                        type="button"
-                        variant="outline"
-                        className="w-full gap-2 sm:w-auto"
-                        disabled={exporting || news.data.length === 0}
-                        onClick={handleExportPdf}
-                    >
-                        <FileDown className="h-4 w-4" />
-                        {exporting ? "Exporting…" : "Export PDF"}
-                    </Button>
+                    <>
+                        {selectedIds.size > 0 && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="w-full gap-2 sm:w-auto"
+                                disabled={downloading}
+                                onClick={handleDownloadZip}
+                            >
+                                <Archive className="h-4 w-4" />
+                                {downloading
+                                    ? "Preparing ZIP…"
+                                    : `Download (${selectedIds.size})`}
+                            </Button>
+                        )}
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="w-full gap-2 sm:w-auto"
+                            disabled={exporting || news.data.length === 0}
+                            onClick={handleExportPdf}
+                        >
+                            <FileDown className="h-4 w-4" />
+                            {exporting ? "Exporting…" : "Export PDF"}
+                        </Button>
+                    </>
                 ) : undefined
             }
             btnText={canPerform(user, 'add') ? "Add student" : undefined}

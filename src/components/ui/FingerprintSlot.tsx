@@ -6,12 +6,14 @@ type FingerprintSlotProps = {
   label: string;
   value?: string;
   onCapture: () => void | Promise<void>;
+  onBrowse?: () => void;
 };
 
 export default function FingerprintSlot({
   label,
   value,
   onCapture,
+  onBrowse,
 }: FingerprintSlotProps) {
   return (
     <div
@@ -32,6 +34,17 @@ export default function FingerprintSlot({
       >
         {value ? `Recapture ${label}` : `Capture ${label}`}
       </Button>
+      {onBrowse && (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="w-full"
+          onClick={onBrowse}
+        >
+          Browse
+        </Button>
+      )}
     </div>
   );
 }

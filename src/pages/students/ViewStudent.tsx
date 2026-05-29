@@ -2,8 +2,10 @@ import { Button } from "@/components/ui/button"
 import Api from "@/lib/api"
 import PageHeader from "@/components/ui/PageHeader"
 import Loader from "@/components/ui/Loader"
-import EnhanceFingerprintsControl from "@/components/students/EnhanceFingerprintsControl"
-import { ArrowLeft } from "lucide-react"
+import FingerprintEditorModal, {
+    type FingerKey,
+} from "@/components/students/FingerprintEditorModal"
+import { ArrowLeft, Pencil } from "lucide-react"
 import { useEffect, useState } from "react"
 import toast from "react-hot-toast"
 import { useNavigate, useParams } from "react-router-dom"
@@ -11,12 +13,25 @@ import { useAuth } from "@/contexts/AuthContext"
 import { canPerform } from "@/lib/permissions"
 import { FingerprintImage } from "@/components/ui/FingerprintImage"
 
+const FINGER_KEYS: FingerKey[] = [
+    "finger1",
+    "finger2",
+    "finger3",
+    "finger4",
+    "finger5",
+]
+
 const ViewStudent = () => {
     const { id } = useParams()
     const navigate = useNavigate()
     const { user } = useAuth()
     const [data, setData] = useState<Record<string, unknown>>({})
     const [loading, setLoading] = useState(true)
+    const [editor, setEditor] = useState<{
+        key: FingerKey
+        label: string
+        image: string
+    } | null>(null)
 
     async function fetchStudent() {
         try {
@@ -34,24 +49,14 @@ const ViewStudent = () => {
         fetchStudent()
     }, [id])
 
-    async function enhanceRecordedAdvanced() {
-        if (!id) return
-        try {
-            const res = await Api.post(`api/student/${id}/enhance-advanced`)
-            setData(res.data.data)
-            toast.success(res.data.message)
-        } catch (err: unknown) {
-            const msg =
-                (err as { response?: { data?: { message?: string } } })?.response
-                    ?.data?.message ?? "Failed to enhance fingerprints"
-            toast.error(msg)
-            throw new Error("enhance failed")
-        }
+    function handleFingerSaved(fingerKey: FingerKey, imageBase64: string) {
+        setData((prev) => ({ ...prev, [fingerKey]: imageBase64 }))
     }
 
     if (loading) return <Loader />
 
     const batch = data.batch as { name?: string } | undefined
+    const canEdit = canPerform(user, "edit")
 
     return (
         <div className="space-y-6">
@@ -59,18 +64,10 @@ const ViewStudent = () => {
                 title={String(data.name ?? "Student")}
                 subtitle="Student profile and fingerprint records"
                 action={
-                    <div className="flex flex-wrap gap-2">
-                        {canPerform(user, 'edit') && (
-                            <EnhanceFingerprintsControl
-                                mode="advanced"
-                                onEnhance={enhanceRecordedAdvanced}
-                            />
-                        )}
-                        <Button variant="outline" onClick={() => navigate(-1)} className="gap-2">
-                            <ArrowLeft className="h-4 w-4" />
-                            Back
-                        </Button>
-                    </div>
+                    <Button variant="outline" onClick={() => navigate(-1)} className="gap-2">
+                        <ArrowLeft className="h-4 w-4" />
+                        Back
+                    </Button>
                 }
             />
 
@@ -100,9 +97,9 @@ const ViewStudent = () => {
                         Fingerprints
                     </h3>
                     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-                        {Array.from({ length: 5 }).map((_, index) => {
-                            const key = `finger${index + 1}`
+                        {FINGER_KEYS.map((key, index) => {
                             const src = data[key] as string | undefined
+                            const label = `Finger ${index + 1}`
                             return (
                                 <div
                                     key={key}
@@ -110,17 +107,47 @@ const ViewStudent = () => {
                                 >
                                     <FingerprintImage
                                         src={src}
-                                        alt={`Finger ${index + 1}`}
+                                        alt={label}
                                     />
                                     <span className="text-xs font-semibold text-slate-600">
-                                        Finger {index + 1}
+                                        {label}
                                     </span>
+                                    {canEdit && src && (
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            className="w-full gap-1.5"
+                                            onClick={() =>
+                                                setEditor({
+                                                    key,
+                                                    label,
+                                                    image: src,
+                                                })
+                                            }
+                                        >
+                                            <Pencil className="h-3.5 w-3.5" />
+                                            Edit image
+                                        </Button>
+                                    )}
                                 </div>
                             )
                         })}
                     </div>
                 </div>
             </div>
+
+            {editor && id && (
+                <FingerprintEditorModal
+                    open={Boolean(editor)}
+                    onClose={() => setEditor(null)}
+                    studentId={id}
+                    fingerKey={editor.key}
+                    fingerLabel={editor.label}
+                    imageBase64={editor.image}
+                    onSaved={handleFingerSaved}
+                />
+            )}
         </div>
     )
 }

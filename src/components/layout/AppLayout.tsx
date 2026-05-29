@@ -11,6 +11,7 @@ import {
   UserCog,
   Menu,
   X,
+  Images,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { SessionUser } from '@/types/auth';
@@ -25,11 +26,13 @@ export default function AppLayout() {
         { to: '/', label: 'Dashboard', icon: Home },
         { to: '/users', label: 'Users', icon: UserCog },
         { to: '/batch', label: 'Batches', icon: Layers },
+        { to: '/media', label: 'Media', icon: Images },
         { to: '/student', label: 'Students', icon: Users },
       ]
     : [
         { to: '/', label: 'Dashboard', icon: Home },
         { to: '/batch', label: 'Batches', icon: Layers },
+        { to: '/media', label: 'Media', icon: Images },
         { to: '/student', label: 'Students', icon: Users },
       ];
 
