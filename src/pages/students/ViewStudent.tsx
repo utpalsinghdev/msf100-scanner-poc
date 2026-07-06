@@ -5,14 +5,14 @@ import Loader from "@/components/ui/Loader"
 import FingerprintEditorModal, {
     type FingerKey,
 } from "@/components/students/FingerprintEditorModal"
-import { ArrowLeft, Pencil, Sparkles } from "lucide-react"
+import { ArrowLeft, Pencil } from "lucide-react"
 import { useEffect, useState } from "react"
 import toast from "react-hot-toast"
 import { useNavigate, useParams } from "react-router-dom"
 import { useAuth } from "@/contexts/AuthContext"
 import { canPerform } from "@/lib/permissions"
 import { FingerprintImage } from "@/components/ui/FingerprintImage"
-import { enhancedFingerKey, enhancedImageSrc, enhanceFinger } from "@/lib/enhanceFingerprint"
+import { enhancedFingerKey, enhancedImageSrc } from "@/lib/enhanceFingerprint"
 
 const FINGER_KEYS: FingerKey[] = [
     "finger1",
@@ -28,7 +28,6 @@ const ViewStudent = () => {
     const { user } = useAuth()
     const [data, setData] = useState<Record<string, unknown>>({})
     const [loading, setLoading] = useState(true)
-    const [enhancing, setEnhancing] = useState<Record<string, boolean>>({})
     const [editor, setEditor] = useState<{
         key: FingerKey
         label: string
@@ -63,24 +62,6 @@ const ViewStudent = () => {
 
     function handleFingerSaved(_fingerKey: FingerKey, imageBase64: string, saveKey: string) {
         setData((prev) => ({ ...prev, [saveKey]: imageBase64 }))
-    }
-
-    async function handleEnhance(fingerKey: FingerKey) {
-        if (!id) return
-        setEnhancing((prev) => ({ ...prev, [fingerKey]: true }))
-        try {
-            const result = await enhanceFinger(id, fingerKey)
-            setData(result.student)
-            toast.success("Fingerprint enhanced")
-        } catch (err: unknown) {
-            const msg =
-                (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-                (err as { message?: string })?.message ??
-                "Enhancement failed"
-            toast.error(msg)
-        } finally {
-            setEnhancing((prev) => ({ ...prev, [fingerKey]: false }))
-        }
     }
 
     if (loading) return <Loader />
@@ -132,7 +113,6 @@ const ViewStudent = () => {
                             const enhancedKey = enhancedFingerKey(key)
                             const enhancedSrc = data[enhancedKey] as string | undefined
                             const label = `Finger ${index + 1}`
-                            const isEnhancing = enhancing[key] ?? false
                             const alreadyEnhanced = Boolean(enhancedSrc)
 
                             const displaySrc = alreadyEnhanced
@@ -180,19 +160,6 @@ const ViewStudent = () => {
                                                 <Pencil className="h-3.5 w-3.5" />
                                                 Edit image
                                             </Button>
-                                            {/* Enhance button — disabled for now
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                size="sm"
-                                                className="w-full gap-1.5 border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700 disabled:opacity-50"
-                                                disabled={isEnhancing || alreadyEnhanced}
-                                                onClick={() => handleEnhance(key)}
-                                            >
-                                                <Sparkles className="h-3.5 w-3.5" />
-                                                {isEnhancing ? "Enhancing…" : alreadyEnhanced ? "Enhanced" : "Enhance"}
-                                            </Button>
-                                            */}
                                         </div>
                                     )}
                                 </div>
