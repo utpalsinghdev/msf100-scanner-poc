@@ -17,7 +17,7 @@ import {
 import { useAsyncDebounce } from "../../hooks/use_debounce";
 import { useIsMobile } from "../../hooks/useMediaQuery";
 import { Button } from "./button";
-import { Plus } from "lucide-react";
+import { Plus, SearchX } from "lucide-react";
 
 export function PageButton({ children, className, disabled, ...rest }: any) {
   return (
@@ -76,7 +76,7 @@ function MobileRowCard({ row, columns }: { row: any; columns: any[] }) {
   const dataCols = columns.filter((c) => c !== actionCol && c !== selectCol);
 
   return (
-    <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <article className="surface-card-interactive p-4">
       {selectCol && (
         <div className="mb-3 flex items-center gap-2 border-b border-slate-100 pb-3">
           {row.cells
@@ -241,13 +241,19 @@ function Table({
     ) : null;
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+    <div className="surface-card overflow-hidden shadow-soft">
       {toolbar}
 
       {isMobile ? (
         <div className="space-y-3 p-4">
           {page?.length === 0 ? (
-            <p className="py-12 text-center text-sm text-slate-500">No records found.</p>
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400">
+                <SearchX className="h-6 w-6" />
+              </div>
+              <p className="text-sm font-medium text-slate-600">No records found</p>
+              <p className="mt-1 text-xs text-slate-400">Try adjusting your search</p>
+            </div>
           ) : (
             page.map((row: any) => {
               prepareRow(row);
@@ -300,11 +306,14 @@ function Table({
             >
               {page?.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan={columns.length}
-                    className="px-6 py-16 text-center text-sm text-slate-500"
-                  >
-                    No records found.
+                  <td colSpan={columns.length} className="px-6 py-16">
+                    <div className="flex flex-col items-center justify-center text-center">
+                      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400">
+                        <SearchX className="h-6 w-6" />
+                      </div>
+                      <p className="text-sm font-medium text-slate-600">No records found</p>
+                      <p className="mt-1 text-xs text-slate-400">Try adjusting your search</p>
+                    </div>
                   </td>
                 </tr>
               ) : (
@@ -314,7 +323,7 @@ function Table({
                     <tr
                       key={row.id}
                       {...row.getRowProps()}
-                      className="transition-colors hover:bg-slate-50/60"
+                      className="transition-colors duration-150 hover:bg-indigo-50/30"
                     >
                       {row.cells?.map((cell: any) => (
                         <td

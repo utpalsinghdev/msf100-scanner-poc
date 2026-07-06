@@ -27,7 +27,7 @@ export function FingerprintImage({
   return (
     <div
       className={cn(
-        'flex shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white ring-1 ring-slate-200',
+        'flex shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white ring-1 ring-slate-200 transition-shadow duration-200',
         className,
       )}
       style={{

@@ -7,13 +7,14 @@ type StatCardProps = {
   icon: LucideIcon;
   accent?: 'indigo' | 'emerald' | 'amber' | 'violet';
   onClick?: () => void;
+  className?: string;
 };
 
 const accents = {
-  indigo: 'from-indigo-500 to-indigo-600 shadow-indigo-500/25',
-  emerald: 'from-emerald-500 to-emerald-600 shadow-emerald-500/25',
-  amber: 'from-amber-500 to-amber-600 shadow-amber-500/25',
-  violet: 'from-violet-500 to-violet-600 shadow-violet-500/25',
+  indigo: 'from-indigo-500 to-indigo-600 shadow-indigo-500/30',
+  emerald: 'from-emerald-500 to-emerald-600 shadow-emerald-500/30',
+  amber: 'from-amber-500 to-amber-600 shadow-amber-500/30',
+  violet: 'from-violet-500 to-violet-600 shadow-violet-500/30',
 };
 
 export default function StatCard({
@@ -22,6 +23,7 @@ export default function StatCard({
   icon: Icon,
   accent = 'indigo',
   onClick,
+  className,
 }: StatCardProps) {
   return (
     <button
@@ -29,26 +31,29 @@ export default function StatCard({
       onClick={onClick}
       disabled={!onClick}
       className={cn(
-        'group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4 text-left shadow-sm transition-all sm:p-6',
-        onClick && 'hover:-translate-y-0.5 hover:shadow-lg cursor-pointer',
+        'group relative overflow-hidden rounded-2xl border border-slate-200/70 bg-white p-4 text-left shadow-soft transition-all duration-300 ease-out sm:p-6',
+        onClick && 'cursor-pointer hover:-translate-y-1 hover:border-indigo-200/60 hover:shadow-lift active:translate-y-0 active:scale-[0.99]',
         !onClick && 'cursor-default',
+        className,
       )}
     >
-      <div className="flex items-start justify-between">
-        <div>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
           <p className="text-sm font-medium text-slate-500">{label}</p>
-          <p className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">{value}</p>
+          <p className="mt-2 text-2xl font-bold tabular-nums tracking-tight text-slate-900 sm:text-3xl">
+            {value}
+          </p>
         </div>
         <div
           className={cn(
-            'flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-lg',
+            'flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-lg transition-transform duration-300 group-hover:scale-105',
             accents[accent],
           )}
         >
           <Icon className="h-6 w-6" />
         </div>
       </div>
-      <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-gradient-to-br from-slate-400 to-slate-600 opacity-[0.07] transition-opacity group-hover:opacity-10" />
+      <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-gradient-to-br from-indigo-400 to-violet-500 opacity-[0.06] transition-opacity duration-300 group-hover:opacity-[0.1]" />
     </button>
   );
 }

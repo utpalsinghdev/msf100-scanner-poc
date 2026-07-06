@@ -67,10 +67,24 @@ module.exports = {
                     from: { height: "var(--radix-accordion-content-height)" },
                     to: { height: "0" },
                 },
+                "fade-in": {
+                    from: { opacity: "0" },
+                    to: { opacity: "1" },
+                },
+                "slide-up": {
+                    from: { opacity: "0", transform: "translateY(8px)" },
+                    to: { opacity: "1", transform: "translateY(0)" },
+                },
             },
             animation: {
                 "accordion-down": "accordion-down 0.2s ease-out",
                 "accordion-up": "accordion-up 0.2s ease-out",
+                "fade-in": "fade-in 0.3s ease-out both",
+                "slide-up": "slide-up 0.35s cubic-bezier(0.22, 1, 0.36, 1) both",
+            },
+            boxShadow: {
+                soft: "0 2px 8px -2px rgba(15, 23, 42, 0.06), 0 4px 16px -4px rgba(15, 23, 42, 0.08)",
+                lift: "0 8px 24px -8px rgba(79, 70, 229, 0.18), 0 4px 12px -4px rgba(15, 23, 42, 0.08)",
             },
         },
     },

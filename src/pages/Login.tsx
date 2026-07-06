@@ -53,7 +53,7 @@ export default function Login() {
       </div>
 
       <div className="flex flex-1 items-center justify-center p-4 pb-8 sm:p-8 lg:p-12">
-        <div className="glass-card w-full max-w-md p-6 sm:p-8 lg:p-10">
+        <div className="glass-card animate-scale-in w-full max-w-md p-6 sm:p-8 lg:p-10">
           <div className="mb-8 lg:hidden flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-white">
               <Fingerprint className="h-5 w-5" />

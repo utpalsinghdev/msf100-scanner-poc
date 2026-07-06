@@ -92,7 +92,7 @@ const AddStudent = () => {
                 }
             />
 
-            <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-6 lg:p-8">
+            <div className="surface-card p-4 sm:p-6 lg:p-8">
                 <Formik
                     initialValues={formState}
                     enableReinitialize
@@ -142,7 +142,7 @@ const AddStudent = () => {
                         <>
                         <form onSubmit={formik.handleSubmit} className="space-y-8">
                             <section>
-                                <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-400">
+                                <h3 className="section-label mb-4">
                                     Personal information
                                 </h3>
                                 <div className="grid gap-5 sm:grid-cols-2">
@@ -191,7 +191,7 @@ const AddStudent = () => {
                             <section>
                                 <div className="mb-4 flex items-center gap-2">
                                     <Fingerprint className="h-5 w-5 text-indigo-600" />
-                                    <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-400">
+                                    <h3 className="section-label">
                                         Fingerprint capture
                                     </h3>
                                 </div>

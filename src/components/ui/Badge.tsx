@@ -31,7 +31,7 @@ function Badge({
     <button
       type="button"
       className={cn(
-        "inline-flex cursor-pointer items-center rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors",
+        "inline-flex cursor-pointer items-center rounded-lg px-3 py-1.5 text-xs font-semibold transition-all duration-200 active:scale-[0.97]",
         styles[type],
         className
       )}

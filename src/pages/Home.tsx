@@ -1,4 +1,4 @@
-import { Users2, Layers, UserCog, Shield, StampIcon } from 'lucide-react';
+import { Users2, Layers, UserCog, Shield, StampIcon, Lightbulb, Download } from 'lucide-react';
 import Loader from '@/components/ui/Loader';
 import PageHeader from '@/components/ui/PageHeader';
 import StatCard from '@/components/ui/StatCard';
@@ -56,85 +56,53 @@ function DashboardHome() {
 
       {isMaster && dashboard?.role === 'MasterAdmin' ? (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          <StatCard
-            label="Total users"
-            value={dashboard.totalUsers}
-            icon={Users2}
-            accent="indigo"
-            onClick={() => navigate('/users')}
-          />
-          <StatCard
-            label="Users"
-            value={dashboard.users}
-            icon={UserCog}
-            accent="emerald"
-            onClick={() => navigate('/users')}
-          />
-          <StatCard
-            label="Master admins"
-            value={dashboard.masterAdmins}
-            icon={Shield}
-            accent="violet"
-            onClick={() => navigate('/users')}
-          />
-          <StatCard
-            label="Batches"
-            value={dashboard.batches}
-            icon={Layers}
-            accent="emerald"
-            onClick={() => navigate('/batch')}
-          />
-          <StatCard
-            label="Students"
-            value={dashboard.students}
-            icon={Users2}
-            accent="indigo"
-            onClick={() => navigate('/student')}
-          />
+          <StatCard className="stagger-1 animate-slide-up" label="Total users" value={dashboard.totalUsers} icon={Users2} accent="indigo" onClick={() => navigate('/users')} />
+          <StatCard className="stagger-2 animate-slide-up" label="Users" value={dashboard.users} icon={UserCog} accent="emerald" onClick={() => navigate('/users')} />
+          <StatCard className="stagger-3 animate-slide-up" label="Master admins" value={dashboard.masterAdmins} icon={Shield} accent="violet" onClick={() => navigate('/users')} />
+          <StatCard className="stagger-4 animate-slide-up" label="Batches" value={dashboard.batches} icon={Layers} accent="emerald" onClick={() => navigate('/batch')} />
+          <StatCard className="stagger-5 animate-slide-up" label="Students" value={dashboard.students} icon={Users2} accent="indigo" onClick={() => navigate('/student')} />
         </div>
       ) : dashboard?.role === 'User' ? (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard
-            label="Students"
-            value={dashboard.students}
-            icon={Users2}
-            accent="indigo"
-            onClick={() => navigate('/student')}
-          />
-          <StatCard
-            label="Batches"
-            value={dashboard.batches}
-            icon={Layers}
-            accent="emerald"
-            onClick={() => navigate('/batch')}
-          />
-          <StatCard
-            label="Remaining batches"
-            value={dashboard.remainingBatches}
-            icon={StampIcon}
-            accent="amber"
-          />
-          <StatCard
-            label="Max students / batch"
-            value={dashboard.maxStudentsPerBatch}
-            icon={UserCog}
-            accent="violet"
-          />
+          <StatCard className="stagger-1 animate-slide-up" label="Students" value={dashboard.students} icon={Users2} accent="indigo" onClick={() => navigate('/student')} />
+          <StatCard className="stagger-2 animate-slide-up" label="Batches" value={dashboard.batches} icon={Layers} accent="emerald" onClick={() => navigate('/batch')} />
+          <StatCard className="stagger-3 animate-slide-up" label="Remaining batches" value={dashboard.remainingBatches} icon={StampIcon} accent="amber" />
+          <StatCard className="stagger-4 animate-slide-up" label="Max students / batch" value={dashboard.maxStudentsPerBatch} icon={UserCog} accent="violet" />
         </div>
       ) : null}
 
-      <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:mt-10 sm:p-6">
-        <h3 className="font-semibold text-slate-900">Quick tips</h3>
-        <ul className="mt-3 space-y-2 text-sm text-slate-600">
+      <div className="surface-card mt-6 overflow-hidden sm:mt-10">
+        <div className="border-b border-slate-100 bg-gradient-to-r from-indigo-50/80 to-violet-50/50 px-4 py-3 sm:px-6">
+          <div className="flex items-center gap-2">
+            <Lightbulb className="h-4 w-4 text-indigo-600" />
+            <h3 className="font-semibold text-slate-900">Quick tips</h3>
+          </div>
+        </div>
+        <ul className="space-y-3 p-4 text-sm leading-relaxed text-slate-600 sm:p-6">
           {isMaster ? (
             <>
-              <li>• Create Users with batch limits and access permissions from the Users page.</li>
-              <li>• You can create unlimited batches and students as Master Admin.</li>
+              <li className="flex gap-3">
+                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-400" />
+                Create users with batch limits and permissions from the Users page.
+              </li>
+              <li className="flex gap-3">
+                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-400" />
+                As Master Admin you can create unlimited batches and students.
+              </li>
             </>
           ) : (
             <>
-              <li>• Create batches first, then register students with fingerprint capture.</li>
-              <li>• Install MFS100 drivers from the header before scanning.</li>
+              <li className="flex gap-3">
+                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-400" />
+                Create batches first, then register students with fingerprint capture.
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-400" />
+                <span>
+                  Install MFS100 drivers from the header{' '}
+                  <Download className="mb-0.5 inline h-3.5 w-3.5 text-indigo-500" /> before scanning.
+                </span>
+              </li>
             </>
           )}
         </ul>

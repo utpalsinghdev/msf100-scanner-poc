@@ -83,10 +83,8 @@ const ViewStudent = () => {
             />
 
             <div className="grid gap-6 lg:grid-cols-3">
-                <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-6 lg:col-span-1">
-                    <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-400">
-                        Details
-                    </h3>
+                <div className="surface-card p-4 sm:p-6 lg:col-span-1">
+                    <h3 className="section-label mb-4">Details</h3>
                     <dl className="space-y-4 text-sm">
                         <div>
                             <dt className="text-slate-500">Batch</dt>
@@ -103,10 +101,8 @@ const ViewStudent = () => {
                     </dl>
                 </div>
 
-                <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-6 lg:col-span-2">
-                    <h3 className="mb-5 text-sm font-semibold uppercase tracking-wider text-slate-400">
-                        Fingerprints
-                    </h3>
+                <div className="surface-card p-4 sm:p-6 lg:col-span-2">
+                    <h3 className="section-label mb-5">Fingerprints</h3>
                     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
                         {FINGER_KEYS.map((key, index) => {
                             const src = data[key] as string | undefined
@@ -122,7 +118,7 @@ const ViewStudent = () => {
                             return (
                                 <div
                                     key={key}
-                                    className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50/80 p-3"
+                                    className="surface-card-interactive flex flex-col items-center gap-2 p-3"
                                 >
                                     <div className="relative">
                                         {alreadyEnhanced ? (

@@ -21,11 +21,14 @@ export default function PageHeader({
       )}
     >
       <div className="min-w-0">
+        <div className="mb-2 h-1 w-10 rounded-full bg-gradient-to-r from-indigo-500 to-violet-500" />
         <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl lg:text-3xl">
           {title}
         </h1>
         {subtitle && (
-          <p className="mt-1 text-sm text-slate-500 sm:text-base">{subtitle}</p>
+          <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-slate-500 sm:text-base">
+            {subtitle}
+          </p>
         )}
       </div>
       {action && (
