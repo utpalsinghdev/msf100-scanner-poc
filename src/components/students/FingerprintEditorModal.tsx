@@ -10,13 +10,8 @@ import {
   renderAdjustedImageBase64,
   type ImageAdjustments,
 } from '@/lib/applyImageAdjustments';
-import {
-  DEFAULT_CLIPART_SETTINGS,
-  renderClipartBase64,
-  type ClipartSettings,
-} from '@/lib/clipartFingerprint';
-import { cn } from '@/lib/utils';
-import { Sparkles, SlidersHorizontal } from 'lucide-react';
+import { enhancedFingerKey, enhancedImageSrc } from '@/lib/enhanceFingerprint';
+import { FlipHorizontal2 } from 'lucide-react';
 
 export type FingerKey =
   | 'finger1'
@@ -25,8 +20,6 @@ export type FingerKey =
   | 'finger4'
   | 'finger5';
 
-type EditorMode = 'adjust' | 'clipart';
-
 type Props = {
   open: boolean;
   onClose: () => void;
@@ -34,7 +27,8 @@ type Props = {
   fingerKey: FingerKey;
   fingerLabel: string;
   imageBase64: string;
-  onSaved: (fingerKey: FingerKey, imageBase64: string) => void;
+  enhancedBase64?: string;
+  onSaved: (fingerKey: FingerKey, imageBase64: string, saveKey: string) => void;
 };
 
 function AdjustmentSlider({
@@ -79,74 +73,36 @@ export default function FingerprintEditorModal({
   fingerKey,
   fingerLabel,
   imageBase64,
+  enhancedBase64,
   onSaved,
 }: Props) {
-  const [mode, setMode] = useState<EditorMode>('adjust');
-  const [adjustments, setAdjustments] = useState<ImageAdjustments>(
-    DEFAULT_IMAGE_ADJUSTMENTS,
-  );
-  const [clipartSettings, setClipartSettings] = useState<ClipartSettings>(
-    DEFAULT_CLIPART_SETTINGS,
-  );
-  const [clipartPreview, setClipartPreview] = useState<string | null>(null);
-  const [clipartLoading, setClipartLoading] = useState(false);
+  const [adjustments, setAdjustments] = useState<ImageAdjustments>(DEFAULT_IMAGE_ADJUSTMENTS);
   const [saving, setSaving] = useState(false);
+
+  // use enhanced image as the edit base if available
+  const displayBase64 = enhancedBase64?.trim() ? enhancedBase64 : imageBase64;
 
   useEffect(() => {
     if (open) {
-      setMode('adjust');
       setAdjustments(DEFAULT_IMAGE_ADJUSTMENTS);
-      setClipartSettings(DEFAULT_CLIPART_SETTINGS);
-      setClipartPreview(null);
     }
-  }, [open, imageBase64]);
-
-  useEffect(() => {
-    if (!open || mode !== 'clipart') return;
-
-    let cancelled = false;
-    setClipartLoading(true);
-
-    const timer = window.setTimeout(() => {
-      renderClipartBase64(imageBase64, clipartSettings)
-        .then((result) => {
-          if (!cancelled) setClipartPreview(result);
-        })
-        .catch(() => {
-          if (!cancelled) toast.error('Could not generate clipart preview');
-        })
-        .finally(() => {
-          if (!cancelled) setClipartLoading(false);
-        });
-    }, 200);
-
-    return () => {
-      cancelled = true;
-      window.clearTimeout(timer);
-    };
-  }, [open, mode, imageBase64, clipartSettings]);
+  }, [open, displayBase64]);
 
   async function handleSave() {
     setSaving(true);
     try {
-      const updated =
-        mode === 'clipart'
-          ? (clipartPreview ?? (await renderClipartBase64(imageBase64, clipartSettings)))
-          : await renderAdjustedImageBase64(imageBase64, adjustments);
-
-      const res = await Api.put(`api/student/${studentId}`, {
-        [fingerKey]: updated,
-      });
-      onSaved(fingerKey, updated);
-      toast.success(
-        res.data.message ??
-          (mode === 'clipart' ? `${fingerLabel} saved as clipart` : `${fingerLabel} saved`),
-      );
+      const updated = await renderAdjustedImageBase64(displayBase64, adjustments);
+      const saveKey = enhancedBase64?.trim()
+        ? enhancedFingerKey(fingerKey)
+        : fingerKey;
+      await Api.put(`api/student/${studentId}`, { [saveKey]: updated });
+      onSaved(fingerKey, updated, saveKey);
+      toast.success(`${fingerLabel} saved`);
       onClose();
     } catch (err: unknown) {
       const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message ?? 'Failed to save fingerprint';
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+        'Failed to save fingerprint';
       toast.error(msg);
     } finally {
       setSaving(false);
@@ -154,20 +110,15 @@ export default function FingerprintEditorModal({
   }
 
   const filter = adjustmentsFilter(adjustments);
-  const adjustHasChanges =
+  const hasChanges =
     adjustments.brightness !== DEFAULT_IMAGE_ADJUSTMENTS.brightness ||
     adjustments.contrast !== DEFAULT_IMAGE_ADJUSTMENTS.contrast ||
-    adjustments.saturation !== DEFAULT_IMAGE_ADJUSTMENTS.saturation;
+    adjustments.saturation !== DEFAULT_IMAGE_ADJUSTMENTS.saturation ||
+    adjustments.mirrored !== DEFAULT_IMAGE_ADJUSTMENTS.mirrored;
 
-  const canSave =
-    mode === 'adjust'
-      ? adjustHasChanges
-      : Boolean(clipartPreview) && !clipartLoading;
-
-  const previewSrc =
-    mode === 'clipart' && clipartPreview
-      ? fingerprintImageSrc(clipartPreview)
-      : fingerprintImageSrc(imageBase64);
+  const previewSrc = enhancedBase64?.trim()
+    ? enhancedImageSrc(enhancedBase64)
+    : fingerprintImageSrc(imageBase64);
 
   return (
     <Modal
@@ -177,126 +128,75 @@ export default function FingerprintEditorModal({
       size="max-w-xl"
     >
       <div className="space-y-6">
-        <div className="flex gap-2 rounded-xl bg-slate-100 p-1">
-          <button
-            type="button"
-            onClick={() => setMode('adjust')}
-            className={cn(
-              'flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition',
-              mode === 'adjust'
-                ? 'bg-white text-indigo-700 shadow-sm'
-                : 'text-slate-600 hover:text-slate-900',
-            )}
-          >
-            <SlidersHorizontal className="h-4 w-4" />
-            Adjust
-          </button>
-          <button
-            type="button"
-            onClick={() => setMode('clipart')}
-            className={cn(
-              'flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition',
-              mode === 'clipart'
-                ? 'bg-white text-indigo-700 shadow-sm'
-                : 'text-slate-600 hover:text-slate-900',
-            )}
-          >
-            <Sparkles className="h-4 w-4" />
-            Clipart
-          </button>
-        </div>
-
-        <p className="text-sm text-slate-500">
-          {mode === 'adjust'
-            ? 'Adjust brightness, contrast, and saturation.'
-            : 'Clean black-and-white clipart — few colors, reduced noise, smooth ridge lines (like vectorizer clipart mode).'}
-        </p>
-
         <div className="relative flex justify-center rounded-2xl border border-slate-200 bg-slate-50 p-4">
-          {mode === 'clipart' && clipartLoading && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-white/70 text-sm font-medium text-slate-600">
-              Generating clipart…
-            </div>
-          )}
           <img
             src={previewSrc}
             alt={fingerLabel}
             className="max-h-[min(50vh,360px)] max-w-full object-contain"
-            style={mode === 'adjust' ? { filter } : undefined}
+            style={{
+              filter,
+              transform: adjustments.mirrored ? 'scaleX(-1)' : undefined,
+            }}
             draggable={false}
           />
         </div>
 
-        {mode === 'adjust' ? (
-          <div className="space-y-4">
-            <AdjustmentSlider
-              label="Brightness"
-              value={adjustments.brightness}
-              min={40}
-              max={200}
+        <div className="space-y-4">
+          <AdjustmentSlider
+            label="Brightness"
+            value={adjustments.brightness}
+            min={40}
+            max={200}
+            disabled={saving}
+            onChange={(brightness) => setAdjustments((prev) => ({ ...prev, brightness }))}
+          />
+          <AdjustmentSlider
+            label="Contrast"
+            value={adjustments.contrast}
+            min={40}
+            max={200}
+            disabled={saving}
+            onChange={(contrast) => setAdjustments((prev) => ({ ...prev, contrast }))}
+          />
+          <AdjustmentSlider
+            label="Saturation"
+            value={adjustments.saturation}
+            min={0}
+            max={200}
+            disabled={saving}
+            onChange={(saturation) => setAdjustments((prev) => ({ ...prev, saturation }))}
+          />
+
+          <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <div className="flex items-center gap-2 text-sm text-slate-600">
+              <FlipHorizontal2 className="h-4 w-4" />
+              Mirror image
+            </div>
+            <button
+              type="button"
               disabled={saving}
-              onChange={(brightness) =>
-                setAdjustments((prev) => ({ ...prev, brightness }))
+              onClick={() =>
+                setAdjustments((prev) => ({ ...prev, mirrored: !prev.mirrored }))
               }
-            />
-            <AdjustmentSlider
-              label="Contrast"
-              value={adjustments.contrast}
-              min={40}
-              max={200}
-              disabled={saving}
-              onChange={(contrast) =>
-                setAdjustments((prev) => ({ ...prev, contrast }))
-              }
-            />
-            <AdjustmentSlider
-              label="Saturation"
-              value={adjustments.saturation}
-              min={0}
-              max={200}
-              disabled={saving}
-              onChange={(saturation) =>
-                setAdjustments((prev) => ({ ...prev, saturation }))
-              }
-            />
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 ${
+                adjustments.mirrored ? 'bg-indigo-600' : 'bg-slate-200'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                  adjustments.mirrored ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
           </div>
-        ) : (
-          <div className="space-y-4">
-            <AdjustmentSlider
-              label="Detail"
-              value={clipartSettings.detail}
-              min={40}
-              max={100}
-              disabled={saving || clipartLoading}
-              onChange={(detail) =>
-                setClipartSettings((prev) => ({ ...prev, detail }))
-              }
-            />
-            <AdjustmentSlider
-              label="Smoothness"
-              value={clipartSettings.smoothness}
-              min={0}
-              max={100}
-              disabled={saving || clipartLoading}
-              onChange={(smoothness) =>
-                setClipartSettings((prev) => ({ ...prev, smoothness }))
-              }
-            />
-          </div>
-        )}
+        </div>
 
         <div className="flex flex-col-reverse gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end">
           <Button
             type="button"
             variant="outline"
-            disabled={saving || clipartLoading}
-            onClick={() => {
-              if (mode === 'adjust') {
-                setAdjustments(DEFAULT_IMAGE_ADJUSTMENTS);
-              } else {
-                setClipartSettings(DEFAULT_CLIPART_SETTINGS);
-              }
-            }}
+            disabled={saving}
+            onClick={() => setAdjustments(DEFAULT_IMAGE_ADJUSTMENTS)}
           >
             Reset
           </Button>
@@ -310,15 +210,11 @@ export default function FingerprintEditorModal({
           </Button>
           <Button
             type="button"
-            disabled={saving || !canSave}
+            disabled={saving || !hasChanges}
             onClick={handleSave}
             className="min-w-[120px]"
           >
-            {saving
-              ? 'Saving…'
-              : mode === 'clipart'
-                ? 'Save clipart'
-                : 'Save changes'}
+            {saving ? 'Saving…' : 'Save changes'}
           </Button>
         </div>
       </div>

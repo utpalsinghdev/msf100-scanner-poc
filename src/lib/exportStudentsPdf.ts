@@ -13,6 +13,11 @@ export type StudentPdfRecord = {
   finger3?: string | null;
   finger4?: string | null;
   finger5?: string | null;
+  finger1Enhanced?: string | null;
+  finger2Enhanced?: string | null;
+  finger3Enhanced?: string | null;
+  finger4Enhanced?: string | null;
+  finger5Enhanced?: string | null;
 };
 
 const FINGER_KEYS = ['finger1', 'finger2', 'finger3', 'finger4', 'finger5'] as const;
@@ -59,7 +64,11 @@ async function buildImageMap(
   await Promise.all(
     students.flatMap((student, rowIndex) =>
       FINGER_KEYS.map(async (key) => {
-        const dataUrl = await toJpegDataUrl(student[key]);
+        const enhancedKey = `${key}Enhanced` as keyof StudentPdfRecord;
+        const src = (student[enhancedKey] as string | null | undefined)?.trim()
+          ? (student[enhancedKey] as string)
+          : student[key];
+        const dataUrl = await toJpegDataUrl(src);
         if (dataUrl) {
           map.set(`${rowIndex}-${key}`, dataUrl);
         }

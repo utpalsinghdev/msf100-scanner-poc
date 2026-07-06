@@ -5,13 +5,14 @@ import Loader from "@/components/ui/Loader"
 import FingerprintEditorModal, {
     type FingerKey,
 } from "@/components/students/FingerprintEditorModal"
-import { ArrowLeft, Pencil } from "lucide-react"
+import { ArrowLeft, Pencil, Sparkles } from "lucide-react"
 import { useEffect, useState } from "react"
 import toast from "react-hot-toast"
 import { useNavigate, useParams } from "react-router-dom"
 import { useAuth } from "@/contexts/AuthContext"
 import { canPerform } from "@/lib/permissions"
 import { FingerprintImage } from "@/components/ui/FingerprintImage"
+import { enhancedFingerKey, enhancedImageSrc, enhanceFinger } from "@/lib/enhanceFingerprint"
 
 const FINGER_KEYS: FingerKey[] = [
     "finger1",
@@ -27,10 +28,12 @@ const ViewStudent = () => {
     const { user } = useAuth()
     const [data, setData] = useState<Record<string, unknown>>({})
     const [loading, setLoading] = useState(true)
+    const [enhancing, setEnhancing] = useState<Record<string, boolean>>({})
     const [editor, setEditor] = useState<{
         key: FingerKey
         label: string
         image: string
+        enhanced?: string
     } | null>(null)
 
     async function fetchStudent() {
@@ -49,8 +52,35 @@ const ViewStudent = () => {
         fetchStudent()
     }, [id])
 
-    function handleFingerSaved(fingerKey: FingerKey, imageBase64: string) {
-        setData((prev) => ({ ...prev, [fingerKey]: imageBase64 }))
+    useEffect(() => {
+        function onEnhanced(e: Event) {
+            const { studentId } = (e as CustomEvent<{ studentId: string }>).detail
+            if (studentId === id) fetchStudent()
+        }
+        window.addEventListener("fingerprints-enhanced", onEnhanced)
+        return () => window.removeEventListener("fingerprints-enhanced", onEnhanced)
+    }, [id])
+
+    function handleFingerSaved(_fingerKey: FingerKey, imageBase64: string, saveKey: string) {
+        setData((prev) => ({ ...prev, [saveKey]: imageBase64 }))
+    }
+
+    async function handleEnhance(fingerKey: FingerKey) {
+        if (!id) return
+        setEnhancing((prev) => ({ ...prev, [fingerKey]: true }))
+        try {
+            const result = await enhanceFinger(id, fingerKey)
+            setData(result.student)
+            toast.success("Fingerprint enhanced")
+        } catch (err: unknown) {
+            const msg =
+                (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+                (err as { message?: string })?.message ??
+                "Enhancement failed"
+            toast.error(msg)
+        } finally {
+            setEnhancing((prev) => ({ ...prev, [fingerKey]: false }))
+        }
     }
 
     if (loading) return <Loader />
@@ -99,36 +129,71 @@ const ViewStudent = () => {
                     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
                         {FINGER_KEYS.map((key, index) => {
                             const src = data[key] as string | undefined
+                            const enhancedKey = enhancedFingerKey(key)
+                            const enhancedSrc = data[enhancedKey] as string | undefined
                             const label = `Finger ${index + 1}`
+                            const isEnhancing = enhancing[key] ?? false
+                            const alreadyEnhanced = Boolean(enhancedSrc)
+
+                            const displaySrc = alreadyEnhanced
+                                ? enhancedImageSrc(enhancedSrc)
+                                : src
+
                             return (
                                 <div
                                     key={key}
                                     className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50/80 p-3"
                                 >
-                                    <FingerprintImage
-                                        src={src}
-                                        alt={label}
-                                    />
+                                    <div className="relative">
+                                        {alreadyEnhanced ? (
+                                            <div
+                                                className="flex shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white ring-1 ring-indigo-300"
+                                                style={{ width: 138, height: 155 }}
+                                            >
+                                                <img
+                                                    src={displaySrc}
+                                                    alt={label}
+                                                    width={138}
+                                                    height={155}
+                                                    className="h-full w-full object-contain"
+                                                    draggable={false}
+                                                />
+                                            </div>
+                                        ) : (
+                                            <FingerprintImage src={src} alt={label} />
+                                        )}
+                                    </div>
                                     <span className="text-xs font-semibold text-slate-600">
                                         {label}
                                     </span>
                                     {canEdit && src && (
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            size="sm"
-                                            className="w-full gap-1.5"
-                                            onClick={() =>
-                                                setEditor({
-                                                    key,
-                                                    label,
-                                                    image: src,
-                                                })
-                                            }
-                                        >
-                                            <Pencil className="h-3.5 w-3.5" />
-                                            Edit image
-                                        </Button>
+                                        <div className="flex w-full flex-col gap-1.5">
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                className="w-full gap-1.5"
+                                                onClick={() =>
+                                                    setEditor({ key, label, image: src, enhanced: enhancedSrc })
+                                                }
+                                            >
+                                                <Pencil className="h-3.5 w-3.5" />
+                                                Edit image
+                                            </Button>
+                                            {/* Enhance button — disabled for now
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                className="w-full gap-1.5 border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700 disabled:opacity-50"
+                                                disabled={isEnhancing || alreadyEnhanced}
+                                                onClick={() => handleEnhance(key)}
+                                            >
+                                                <Sparkles className="h-3.5 w-3.5" />
+                                                {isEnhancing ? "Enhancing…" : alreadyEnhanced ? "Enhanced" : "Enhance"}
+                                            </Button>
+                                            */}
+                                        </div>
                                     )}
                                 </div>
                             )
@@ -145,6 +210,7 @@ const ViewStudent = () => {
                     fingerKey={editor.key}
                     fingerLabel={editor.label}
                     imageBase64={editor.image}
+                    enhancedBase64={editor.enhanced}
                     onSaved={handleFingerSaved}
                 />
             )}

@@ -5,11 +5,14 @@
 export function fingerprintImageSrc(base64: string | undefined | null): string {
   if (!base64?.trim()) return '';
 
-  const clean = base64.replace(/^data:image\/\w+;base64,/, '').trim();
+  const clean = base64.replace(/^data:image\/[\w+]+;base64,/, '').trim();
   const head = clean.slice(0, 12);
 
   if (head.startsWith('iVBORw0KGgo')) {
     return `data:image/png;base64,${clean}`;
+  }
+  if (head.startsWith('PHN2Zy') || head.startsWith('PD94bW')) {
+    return `data:image/svg+xml;base64,${clean}`;
   }
   if (head.startsWith('/9j/')) {
     return `data:image/jpeg;base64,${clean}`;

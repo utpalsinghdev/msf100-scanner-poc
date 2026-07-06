@@ -8,9 +8,10 @@ function sanitizePathSegment(name: string): string {
 }
 
 function fingerprintExtension(base64: string): string {
-  const clean = base64.replace(/^data:image\/\w+;base64,/, '').trim();
+  const clean = base64.replace(/^data:image\/[\w+]+;base64,/, '').trim();
   if (clean.startsWith('iVBORw0KGgo')) return 'png';
   if (clean.startsWith('/9j/')) return 'jpg';
+  if (clean.startsWith('PD94bW') || clean.startsWith('PHN2Zy')) return 'svg';
   return 'bmp';
 }
 
@@ -72,7 +73,9 @@ export async function exportStudentsZip(students: StudentPdfRecord[]) {
       : `${batchFolder}/${studentFolder}/`;
 
     for (const key of FINGER_KEYS) {
-      const image = student[key]?.trim();
+      const enhancedKey = `${key}Enhanced` as keyof typeof student;
+      const raw = student[enhancedKey] as string | undefined | null;
+      const image = (raw?.trim() ? raw : student[key])?.trim();
       if (!image) continue;
       zip.file(
         `${prefix}${key}.${fingerprintExtension(image)}`,

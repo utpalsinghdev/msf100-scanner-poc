@@ -153,13 +153,15 @@ const Students = () => {
         ...[1, 2, 3, 4, 5].map((n) => ({
             Header: `F${n}`,
             accessor: `finger${n}`,
-            Cell: (cell: any) => (
-                cell.value ? (
-                    <FingerprintImage src={cell.value} className="rounded-lg" />
+            Cell: (cell: any) => {
+                const enhanced = cell.row.original[`finger${n}Enhanced`] as string | undefined
+                const src = (enhanced?.trim() ? enhanced : cell.value) as string | undefined
+                return src ? (
+                    <FingerprintImage src={src} className="rounded-lg" />
                 ) : (
                     <span className="text-slate-300">—</span>
                 )
-            )
+            }
         })),
         {
             Header: "Actions",

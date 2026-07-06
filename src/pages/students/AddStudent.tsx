@@ -13,6 +13,7 @@ import PageHeader from '@/components/ui/PageHeader';
 import FingerprintSlot from '@/components/ui/FingerprintSlot';
 import Loader from '@/components/ui/Loader';
 import MediaPickerModal from '@/components/media/MediaPickerModal';
+import { enhanceFinger } from '@/lib/enhanceFingerprint';
 
 const initialState = {
     name: "",
@@ -102,7 +103,31 @@ const AddStudent = () => {
                                 toast.success(res.data.message);
                             } else {
                                 const res = await Api.post(`api/student`, values);
+                                const studentId = res.data.data?.id as string | undefined;
                                 toast.success(res.data.message);
+
+                                if (studentId) {
+                                    const filledKeys = fingerKeys.filter((k) => Boolean(values[k]));
+                                    if (filledKeys.length > 0) {
+                                        toast.loading("Enhancing fingerprints in background…", { id: "enhance-bg" });
+                                        Promise.allSettled(
+                                            filledKeys.map((k) => enhanceFinger(studentId, k))
+                                        ).then((results) => {
+                                            const failed = results.filter((r) => r.status === "rejected").length;
+                                            toast.dismiss("enhance-bg");
+                                            if (failed === 0) {
+                                                toast.success("All fingerprints enhanced");
+                                            } else {
+                                                toast.error(`${failed} enhancement(s) failed`);
+                                            }
+                                            window.dispatchEvent(
+                                                new CustomEvent("fingerprints-enhanced", {
+                                                    detail: { studentId },
+                                                })
+                                            );
+                                        });
+                                    }
+                                }
                             }
                             navigate("/student")
                         } catch (error: unknown) {
