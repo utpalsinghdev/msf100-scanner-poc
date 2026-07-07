@@ -11,7 +11,7 @@ import {
   type ImageAdjustments,
 } from '@/lib/applyImageAdjustments';
 import { enhancedFingerKey, enhancedImageSrc } from '@/lib/enhanceFingerprint';
-import { FlipHorizontal2 } from 'lucide-react';
+import { FlipHorizontal2, Info } from 'lucide-react';
 
 export type FingerKey =
   | 'finger1'
@@ -19,6 +19,8 @@ export type FingerKey =
   | 'finger3'
   | 'finger4'
   | 'finger5';
+
+const FINGER_KEYS: FingerKey[] = ['finger1', 'finger2', 'finger3', 'finger4', 'finger5'];
 
 type Props = {
   open: boolean;
@@ -28,7 +30,8 @@ type Props = {
   fingerLabel: string;
   imageBase64: string;
   enhancedBase64?: string;
-  onSaved: (fingerKey: FingerKey, imageBase64: string, saveKey: string) => void;
+  allFingerData: Partial<Record<FingerKey, { imageBase64?: string; enhancedBase64?: string }>>;
+  onSaved: (updates: Record<string, string>) => void;
 };
 
 function AdjustmentSlider({
@@ -74,10 +77,12 @@ export default function FingerprintEditorModal({
   fingerLabel,
   imageBase64,
   enhancedBase64,
+  allFingerData,
   onSaved,
 }: Props) {
   const [adjustments, setAdjustments] = useState<ImageAdjustments>(DEFAULT_IMAGE_ADJUSTMENTS);
   const [saving, setSaving] = useState(false);
+  const [applyMirrorToAll, setApplyMirrorToAll] = useState(true);
 
   // use enhanced image as the edit base if available
   const displayBase64 = enhancedBase64?.trim() ? enhancedBase64 : imageBase64;
@@ -85,19 +90,53 @@ export default function FingerprintEditorModal({
   useEffect(() => {
     if (open) {
       setAdjustments(DEFAULT_IMAGE_ADJUSTMENTS);
+      setApplyMirrorToAll(true);
     }
   }, [open, displayBase64]);
 
   async function handleSave() {
     setSaving(true);
     try {
-      const updated = await renderAdjustedImageBase64(displayBase64, adjustments);
+      const currentUpdated = await renderAdjustedImageBase64(displayBase64, adjustments);
       const saveKey = enhancedBase64?.trim()
         ? enhancedFingerKey(fingerKey)
         : fingerKey;
-      await Api.put(`api/student/${studentId}`, { [saveKey]: updated });
-      onSaved(fingerKey, updated, saveKey);
-      toast.success(`${fingerLabel} saved`);
+      const updates: Record<string, string> = {
+        [saveKey]: currentUpdated,
+      };
+
+      // Optionally mirror all student fingerprints, preferring enhanced images.
+      if (applyMirrorToAll && adjustments.mirrored !== DEFAULT_IMAGE_ADJUSTMENTS.mirrored) {
+        const mirrorOnlyAdjustments: ImageAdjustments = {
+          brightness: 100,
+          contrast: 100,
+          saturation: 100,
+          mirrored: adjustments.mirrored,
+        };
+
+        for (const key of FINGER_KEYS) {
+          if (key === fingerKey) continue;
+
+          const fingerData = allFingerData[key];
+          const targetSrc = fingerData?.enhancedBase64?.trim()
+            ? fingerData.enhancedBase64
+            : fingerData?.imageBase64;
+          if (!targetSrc?.trim()) continue;
+
+          const targetKey = fingerData?.enhancedBase64?.trim()
+            ? enhancedFingerKey(key)
+            : key;
+          updates[targetKey] = await renderAdjustedImageBase64(targetSrc, mirrorOnlyAdjustments);
+        }
+      }
+
+      await Api.put(`api/student/${studentId}`, updates);
+      onSaved(updates);
+      toast.success(
+        applyMirrorToAll && adjustments.mirrored !== DEFAULT_IMAGE_ADJUSTMENTS.mirrored
+          ? `${fingerLabel} saved, mirror applied to all`
+          : `${fingerLabel} saved`,
+      );
       onClose();
     } catch (err: unknown) {
       const msg =
@@ -188,6 +227,24 @@ export default function FingerprintEditorModal({
                 }`}
               />
             </button>
+          </div>
+
+          <label className="flex items-center gap-2 text-sm text-slate-600">
+            <input
+              type="checkbox"
+              className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 disabled:opacity-50"
+              checked={applyMirrorToAll}
+              disabled={saving}
+              onChange={(e) => setApplyMirrorToAll(e.target.checked)}
+            />
+            Apply mirror change to all images
+          </label>
+          <div className="flex items-start gap-2 rounded-lg border border-indigo-100 bg-indigo-50/70 px-3 py-2 text-xs text-indigo-700">
+            <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+            <p>
+              Only mirror is applied globally; brightness, contrast, and saturation stay
+              per-image.
+            </p>
           </div>
         </div>
 

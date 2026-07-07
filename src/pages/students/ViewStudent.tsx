@@ -60,8 +60,8 @@ const ViewStudent = () => {
         return () => window.removeEventListener("fingerprints-enhanced", onEnhanced)
     }, [id])
 
-    function handleFingerSaved(_fingerKey: FingerKey, imageBase64: string, saveKey: string) {
-        setData((prev) => ({ ...prev, [saveKey]: imageBase64 }))
+    function handleFingerSaved(updates: Record<string, string>) {
+        setData((prev) => ({ ...prev, ...updates }))
     }
 
     if (loading) return <Loader />
@@ -174,6 +174,13 @@ const ViewStudent = () => {
                     fingerLabel={editor.label}
                     imageBase64={editor.image}
                     enhancedBase64={editor.enhanced}
+                    allFingerData={FINGER_KEYS.reduce((acc, key) => {
+                        acc[key] = {
+                            imageBase64: data[key] as string | undefined,
+                            enhancedBase64: data[enhancedFingerKey(key)] as string | undefined,
+                        }
+                        return acc
+                    }, {} as Partial<Record<FingerKey, { imageBase64?: string; enhancedBase64?: string }>>)}
                     onSaved={handleFingerSaved}
                 />
             )}

@@ -10,7 +10,7 @@ export type ImageAdjustments = {
 
 export const DEFAULT_IMAGE_ADJUSTMENTS: ImageAdjustments = {
   brightness: 100,
-  contrast: 100,
+  contrast: 150,
   saturation: 100,
   mirrored: false,
 };
