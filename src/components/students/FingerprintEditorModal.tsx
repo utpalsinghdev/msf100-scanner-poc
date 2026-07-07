@@ -7,6 +7,7 @@ import { fingerprintImageSrc } from '@/lib/fingerprintImage';
 import {
   adjustmentsFilter,
   DEFAULT_IMAGE_ADJUSTMENTS,
+  RAW_IMAGE_EDITOR_DEFAULTS,
   renderAdjustedImageBase64,
   type ImageAdjustments,
 } from '@/lib/applyImageAdjustments';
@@ -80,19 +81,21 @@ export default function FingerprintEditorModal({
   allFingerData,
   onSaved,
 }: Props) {
-  const [adjustments, setAdjustments] = useState<ImageAdjustments>(DEFAULT_IMAGE_ADJUSTMENTS);
+  const hasEnhanced = Boolean(enhancedBase64?.trim());
+  const editorDefaults = hasEnhanced ? DEFAULT_IMAGE_ADJUSTMENTS : RAW_IMAGE_EDITOR_DEFAULTS;
+  const [adjustments, setAdjustments] = useState<ImageAdjustments>(editorDefaults);
   const [saving, setSaving] = useState(false);
   const [applyMirrorToAll, setApplyMirrorToAll] = useState(true);
 
   // use enhanced image as the edit base if available
-  const displayBase64 = enhancedBase64?.trim() ? enhancedBase64 : imageBase64;
+  const displayBase64 = hasEnhanced ? enhancedBase64! : imageBase64;
 
   useEffect(() => {
     if (open) {
-      setAdjustments(DEFAULT_IMAGE_ADJUSTMENTS);
+      setAdjustments(hasEnhanced ? DEFAULT_IMAGE_ADJUSTMENTS : RAW_IMAGE_EDITOR_DEFAULTS);
       setApplyMirrorToAll(true);
     }
-  }, [open, displayBase64]);
+  }, [open, displayBase64, hasEnhanced]);
 
   async function handleSave() {
     setSaving(true);
@@ -150,10 +153,10 @@ export default function FingerprintEditorModal({
 
   const filter = adjustmentsFilter(adjustments);
   const hasChanges =
-    adjustments.brightness !== DEFAULT_IMAGE_ADJUSTMENTS.brightness ||
-    adjustments.contrast !== DEFAULT_IMAGE_ADJUSTMENTS.contrast ||
-    adjustments.saturation !== DEFAULT_IMAGE_ADJUSTMENTS.saturation ||
-    adjustments.mirrored !== DEFAULT_IMAGE_ADJUSTMENTS.mirrored;
+    adjustments.brightness !== editorDefaults.brightness ||
+    adjustments.contrast !== editorDefaults.contrast ||
+    adjustments.saturation !== editorDefaults.saturation ||
+    adjustments.mirrored !== editorDefaults.mirrored;
 
   const previewSrc = enhancedBase64?.trim()
     ? enhancedImageSrc(enhancedBase64)
@@ -253,7 +256,7 @@ export default function FingerprintEditorModal({
             type="button"
             variant="outline"
             disabled={saving}
-            onClick={() => setAdjustments(DEFAULT_IMAGE_ADJUSTMENTS)}
+            onClick={() => setAdjustments(editorDefaults)}
           >
             Reset
           </Button>

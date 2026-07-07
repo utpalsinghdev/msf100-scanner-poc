@@ -1,5 +1,4 @@
 import { fingerprintImageSrc } from '@/lib/fingerprintImage';
-import { enhancedImageSrc } from '@/lib/enhanceFingerprint';
 
 export type ImageAdjustments = {
   brightness: number;
@@ -8,20 +7,29 @@ export type ImageAdjustments = {
   mirrored: boolean;
 };
 
-export const DEFAULT_IMAGE_ADJUSTMENTS: ImageAdjustments = {
+/** Baked into finger*Enhanced on background save (contrast + mirror). */
+export const ENHANCED_SAVE_ADJUSTMENTS: ImageAdjustments = {
   brightness: 100,
   contrast: 150,
+  saturation: 100,
+  mirrored: true,
+};
+
+/** Neutral preview — enhanced images already have ENHANCED_SAVE_ADJUSTMENTS baked in. */
+export const DEFAULT_IMAGE_ADJUSTMENTS: ImageAdjustments = {
+  brightness: 100,
+  contrast: 100,
   saturation: 100,
   mirrored: false,
 };
 
-function isSvgBase64(base64: string): boolean {
-  const clean = base64.replace(/^data:image\/[\w+]+;base64,/, '').trim();
-  return clean.startsWith('PHN2Zy') || clean.startsWith('PD94bW');
-}
+/** Raw fingerprint editor starting point (matches what background enhance will apply). */
+export const RAW_IMAGE_EDITOR_DEFAULTS: ImageAdjustments = {
+  ...ENHANCED_SAVE_ADJUSTMENTS,
+};
 
 function resolveImageSrc(base64: string): string {
-  return isSvgBase64(base64) ? enhancedImageSrc(base64) : fingerprintImageSrc(base64);
+  return fingerprintImageSrc(base64);
 }
 
 export function adjustmentsFilter({
