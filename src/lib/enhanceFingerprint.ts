@@ -15,24 +15,26 @@ export function enhancedImageSrc(base64: string | undefined | null): string {
   return fingerprintImageSrc(base64);
 }
 
-/** Apply contrast 150% + mirror, then persist to finger*Enhanced. */
+/** Call enhancer microservice, apply contrast 150% + mirror, persist to finger*Enhanced. */
 export async function enhanceFinger(
   studentId: string,
   fingerKey: FingerKey,
-  imageBase64?: string,
 ): Promise<{ student: Record<string, unknown>; enhancedBase64: string }> {
-  let raw = imageBase64?.trim();
-  if (!raw) {
-    const res = await Api.get(`api/student/${studentId}`);
-    raw = res.data.data[fingerKey] as string | undefined;
-  }
-  if (!raw) {
-    throw new Error(`No image found for ${fingerKey}`);
+  const res = await Api.post(`api/student/${studentId}/enhance/${fingerKey}`);
+  const serviceBase64 = res.data.data?.enhancedBase64 as string | undefined;
+  if (!serviceBase64?.trim()) {
+    throw new Error('Enhancer returned no image data');
   }
 
-  const enhancedBase64 = await renderAdjustedImageBase64(raw, ENHANCED_SAVE_ADJUSTMENTS);
+  const enhancedBase64 = await renderAdjustedImageBase64(
+    serviceBase64,
+    ENHANCED_SAVE_ADJUSTMENTS,
+  );
   const enhancedKey = enhancedFingerKey(fingerKey);
-  const res = await Api.put(`api/student/${studentId}`, { [enhancedKey]: enhancedBase64 });
+  const putRes = await Api.put(`api/student/${studentId}`, { [enhancedKey]: enhancedBase64 });
 
-  return { student: res.data.data as Record<string, unknown>, enhancedBase64 };
+  return {
+    student: putRes.data.data as Record<string, unknown>,
+    enhancedBase64,
+  };
 }

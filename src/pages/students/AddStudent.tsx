@@ -111,9 +111,7 @@ const AddStudent = () => {
                                     if (filledKeys.length > 0) {
                                         toast.loading("Enhancing fingerprints in background…", { id: "enhance-bg" });
                                         Promise.allSettled(
-                                            filledKeys.map((k) =>
-                                                enhanceFinger(studentId, k, values[k] as string),
-                                            ),
+                                            filledKeys.map((k) => enhanceFinger(studentId, k)),
                                         ).then((results) => {
                                             const failed = results.filter((r) => r.status === "rejected").length;
                                             toast.dismiss("enhance-bg");
