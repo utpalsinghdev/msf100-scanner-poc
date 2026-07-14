@@ -250,9 +250,15 @@ const Students = () => {
                     const enhanced = cell.row.original[`finger${n}Enhanced`] as
                         | string
                         | undefined;
-                    const src = (enhanced?.trim() ? enhanced : cell.value) as
+                    const full = (enhanced?.trim() ? enhanced : cell.value) as
                         | string
                         | undefined;
+                    // List uses server JPEG thumbs (~few KB) instead of full 100–500KB images.
+                    const src = full?.trim()
+                        ? full.includes("?")
+                            ? `${full}&thumb=1`
+                            : `${full}?thumb=1`
+                        : undefined;
                     return src ? (
                         <FingerprintImage src={src} className="rounded-lg" />
                     ) : (

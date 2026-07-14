@@ -37,8 +37,8 @@ export function fingerprintImageSrc(base64: string | undefined | null): string {
   return `data:image/bmp;base64,${clean}`;
 }
 
-/** Cap parallel finger GETs so the table doesn't saturate the browser (ponytail: 5). */
-const MAX_CONCURRENT_FINGER_FETCHES = 5;
+/** Cap parallel finger GETs so the table doesn't saturate the browser. */
+const MAX_CONCURRENT_FINGER_FETCHES = 8;
 
 const blobUrlCache = new Map<string, string>();
 const inflight = new Map<string, Promise<string>>();
