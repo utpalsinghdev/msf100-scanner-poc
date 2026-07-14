@@ -179,6 +179,7 @@ function Table({
     setGlobalFilter,
     setPageSize,
   }: any = useTable(
+    // react-table v7 types omit pagination fields on TableState unless plugins are fully typed.
     {
       columns,
       data,
@@ -191,7 +192,7 @@ function Table({
             autoResetPage: false,
           }
         : {}),
-    },
+    } as any,
     useFilters,
     useGlobalFilter,
     useSortBy,
