@@ -3,6 +3,7 @@ import { cn } from '@/lib/utils';
 import {
   fetchFingerprintBlobUrl,
   fingerprintImageSrc,
+  isCachedFingerprintBlobUrl,
   isRemoteFingerprintSrc,
 } from '@/lib/fingerprintImage';
 import { Fingerprint } from 'lucide-react';
@@ -47,10 +48,7 @@ export function FingerprintImage({
 
       try {
         const url = await fetchFingerprintBlobUrl(src);
-        if (cancelled) {
-          URL.revokeObjectURL(url);
-          return;
-        }
+        if (cancelled) return;
         objectUrl = url;
         setDisplaySrc(url);
       } catch {
@@ -62,9 +60,11 @@ export function FingerprintImage({
 
     return () => {
       cancelled = true;
-      // Clear before revoke so <img> never keeps a dead blob (alt="fingerprint").
       setDisplaySrc('');
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      // Cached blob URLs are shared across the table — never revoke those.
+      if (objectUrl && !isCachedFingerprintBlobUrl(objectUrl)) {
+        URL.revokeObjectURL(objectUrl);
+      }
     };
   }, [src]);
 

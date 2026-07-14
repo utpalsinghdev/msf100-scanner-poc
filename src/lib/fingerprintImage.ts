@@ -37,30 +37,50 @@ export function fingerprintImageSrc(base64: string | undefined | null): string {
   return `data:image/bmp;base64,${clean}`;
 }
 
-/** Fetch image with JWT (img tags cannot send Authorization). */
-export async function fetchFingerprintBlobUrl(
-  src: string,
-): Promise<string> {
-  if (!isRemoteFingerprintSrc(src)) {
-    return fingerprintImageSrc(src);
+/** Cap parallel finger GETs so the table doesn't saturate the browser (ponytail: 5). */
+const MAX_CONCURRENT_FINGER_FETCHES = 5;
+
+const blobUrlCache = new Map<string, string>();
+const inflight = new Map<string, Promise<string>>();
+let activeFetches = 0;
+const waiters: Array<() => void> = [];
+
+function acquireSlot(): Promise<void> {
+  if (activeFetches < MAX_CONCURRENT_FINGER_FETCHES) {
+    activeFetches += 1;
+    return Promise.resolve();
   }
-  // Axios baseURL + "api/..." (strip leading slash from "/api/...")
+  return new Promise((resolve) => {
+    waiters.push(() => {
+      activeFetches += 1;
+      resolve();
+    });
+  });
+}
+
+function releaseSlot() {
+  activeFetches = Math.max(0, activeFetches - 1);
+  const next = waiters.shift();
+  if (next) next();
+}
+
+async function fetchFingerprintBlobUrlUnqueued(src: string): Promise<string> {
   const path = src.replace(/^https?:\/\/[^/]+/, '').replace(/^\//, '');
   const res = await Api.get(path, {
     responseType: 'blob',
     headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' },
   });
   const blob = res.data as Blob;
-  // Nest error JSON can arrive as Blob when responseType is blob.
   if (!blob?.size || blob.type?.includes('json')) {
     throw new Error('Not an image');
   }
-  // Legacy enhanced files were saved as .bin (SVG) → octet-stream; <img> needs a real image MIME.
   if (blob.type.startsWith('image/')) {
     return URL.createObjectURL(blob);
   }
   const buf = new Uint8Array(await blob.arrayBuffer());
-  const head = new TextDecoder().decode(buf.subarray(0, Math.min(buf.length, 256))).trimStart();
+  const head = new TextDecoder()
+    .decode(buf.subarray(0, Math.min(buf.length, 256)))
+    .trimStart();
   let type = 'application/octet-stream';
   if (buf[0] === 0x89 && buf[1] === 0x50) type = 'image/png';
   else if (buf[0] === 0xff && buf[1] === 0xd8) type = 'image/jpeg';
@@ -68,6 +88,47 @@ export async function fetchFingerprintBlobUrl(
   else if (head.startsWith('<svg') || head.startsWith('<?xml')) type = 'image/svg+xml';
   else throw new Error('Not an image');
   return URL.createObjectURL(new Blob([buf], { type }));
+}
+
+/**
+ * Fetch image with JWT (img tags cannot send Authorization).
+ * Queued (max 5) + session cache so list pages don't stampede or refetch.
+ */
+export async function fetchFingerprintBlobUrl(src: string): Promise<string> {
+  if (!isRemoteFingerprintSrc(src)) {
+    return fingerprintImageSrc(src);
+  }
+
+  const cached = blobUrlCache.get(src);
+  if (cached) return cached;
+
+  const pending = inflight.get(src);
+  if (pending) return pending;
+
+  const job = (async () => {
+    await acquireSlot();
+    try {
+      const again = blobUrlCache.get(src);
+      if (again) return again;
+      const url = await fetchFingerprintBlobUrlUnqueued(src);
+      blobUrlCache.set(src, url);
+      return url;
+    } finally {
+      inflight.delete(src);
+      releaseSlot();
+    }
+  })();
+
+  inflight.set(src, job);
+  return job;
+}
+
+/** True when this blob: URL is owned by the session cache (do not revoke). */
+export function isCachedFingerprintBlobUrl(url: string): boolean {
+  for (const cached of blobUrlCache.values()) {
+    if (cached === url) return true;
+  }
+  return false;
 }
 
 /** Load remote or base64 finger into a data URL / usable src for canvas/PDF. */

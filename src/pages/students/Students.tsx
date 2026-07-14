@@ -112,7 +112,6 @@ const Students = () => {
                     page: pageIndex + 1,
                     limit: pageSize,
                     search: search.trim() || undefined,
-                    thumbs: 1,
                 },
             });
             setNews({
@@ -236,19 +235,12 @@ const Students = () => {
                 Header: `F${n}`,
                 accessor: `finger${n}`,
                 Cell: (cell: any) => {
-                    // Prefer inlined thumbs from list API (no per-finger auth fetches).
-                    const thumbs = cell.row.original.thumbs as
-                        | Record<string, string>
-                        | undefined;
-                    const fromThumbs = thumbs?.[`finger${n}`];
                     const enhanced = cell.row.original[`finger${n}Enhanced`] as
                         | string
                         | undefined;
-                    const src = (fromThumbs?.trim()
-                        ? fromThumbs
-                        : enhanced?.trim()
-                          ? enhanced
-                          : cell.value) as string | undefined;
+                    const src = (enhanced?.trim() ? enhanced : cell.value) as
+                        | string
+                        | undefined;
                     return src ? (
                         <FingerprintImage src={src} className="rounded-lg" />
                     ) : (
