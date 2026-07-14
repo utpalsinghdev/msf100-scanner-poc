@@ -8,6 +8,7 @@ import { FingerprintImage } from '@/components/ui/FingerprintImage';
 import type { MediaRecord } from '@/types/media';
 import { ImageIcon, Upload } from 'lucide-react';
 import { filesToMediaItems } from '@/lib/fileToBase64';
+import { resolveToBase64 } from '@/lib/fingerprintImage';
 import { useAuth } from '@/contexts/AuthContext';
 import { canPerform } from '@/lib/permissions';
 
@@ -28,17 +29,21 @@ export default function MediaPickerModal({
   const inputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [selecting, setSelecting] = useState(false);
   const [items, setItems] = useState<MediaRecord[]>([]);
+  const hasLoadedRef = useRef(false);
   const canUpload = canPerform(user, 'add');
 
   async function loadMedia() {
-    setLoading(true);
+    // Stale-while-revalidate: keep showing last list; only spinner on first load.
+    if (!hasLoadedRef.current) setLoading(true);
     try {
       const res = await Api.get('api/media');
       setItems(res.data.data ?? []);
+      hasLoadedRef.current = true;
     } catch {
       toast.error('Failed to load media library');
-      setItems([]);
+      if (!hasLoadedRef.current) setItems([]);
     } finally {
       setLoading(false);
     }
@@ -49,6 +54,19 @@ export default function MediaPickerModal({
     loadMedia();
   }, [open]);
 
+  async function pickImage(imageSrc: string) {
+    setSelecting(true);
+    try {
+      const base64 = await resolveToBase64(imageSrc);
+      onSelect(base64);
+      onClose();
+    } catch {
+      toast.error('Failed to load selected image');
+    } finally {
+      setSelecting(false);
+    }
+  }
+
   async function handleFilesSelected(fileList: FileList | null) {
     if (!fileList?.length) return;
 
@@ -58,12 +76,12 @@ export default function MediaPickerModal({
       const res = await Api.post('api/media/bulk', { items: payload });
       const created = (res.data.data ?? []) as MediaRecord[];
       setItems((prev) => [...created, ...prev]);
+      hasLoadedRef.current = true;
       toast.success(res.data.message ?? 'Image uploaded to media');
 
       const uploaded = created[0];
       if (uploaded?.image) {
-        onSelect(uploaded.image);
-        onClose();
+        await pickImage(uploaded.image);
       }
     } catch (err: unknown) {
       const msg =
@@ -90,7 +108,7 @@ export default function MediaPickerModal({
             type="file"
             accept=".bmp,.png,.jpg,.jpeg,image/bmp,image/png,image/jpeg"
             className="hidden"
-            disabled={uploading}
+            disabled={uploading || selecting}
             onChange={(e) => handleFilesSelected(e.target.files)}
           />
           <div className="mb-5 flex flex-col gap-3 rounded-xl border border-indigo-100 bg-indigo-50/60 p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -103,7 +121,7 @@ export default function MediaPickerModal({
             <Button
               type="button"
               className="gap-2"
-              disabled={loading || uploading}
+              disabled={loading || uploading || selecting}
               onClick={() => inputRef.current?.click()}
             >
               <Upload className="h-4 w-4" />
@@ -113,7 +131,7 @@ export default function MediaPickerModal({
         </>
       )}
 
-      {loading ? (
+      {loading && !hasLoadedRef.current ? (
         <Loader />
       ) : items.length === 0 ? (
         <div className="flex flex-col items-center gap-3 py-10 text-center">
@@ -131,11 +149,9 @@ export default function MediaPickerModal({
             <button
               key={item.id}
               type="button"
-              onClick={() => {
-                onSelect(item.image);
-                onClose();
-              }}
-              className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50/80 p-3 text-left transition hover:border-indigo-300 hover:bg-indigo-50/50"
+              disabled={selecting || uploading}
+              onClick={() => pickImage(item.image)}
+              className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50/80 p-3 text-left transition hover:border-indigo-300 hover:bg-indigo-50/50 disabled:opacity-50"
             >
               <FingerprintImage src={item.image} alt={item.name} />
               <span className="w-full truncate text-center text-xs font-medium text-slate-700">
@@ -147,7 +163,7 @@ export default function MediaPickerModal({
       )}
 
       <div className="mt-6 flex justify-end border-t border-slate-100 pt-4">
-        <Button type="button" variant="outline" onClick={onClose}>
+        <Button type="button" variant="outline" onClick={onClose} disabled={selecting}>
           Cancel
         </Button>
       </div>

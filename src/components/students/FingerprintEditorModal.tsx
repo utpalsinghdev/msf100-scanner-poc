@@ -3,7 +3,7 @@ import Modal from '@/components/ui/Modal';
 import { Button } from '@/components/ui/button';
 import Api from '@/lib/api';
 import toast from 'react-hot-toast';
-import { fingerprintImageSrc } from '@/lib/fingerprintImage';
+import { fingerprintImageSrc, resolveFingerprintDisplaySrc } from '@/lib/fingerprintImage';
 import {
   adjustmentsFilter,
   DEFAULT_IMAGE_ADJUSTMENTS,
@@ -11,7 +11,7 @@ import {
   renderAdjustedImageBase64,
   type ImageAdjustments,
 } from '@/lib/applyImageAdjustments';
-import { enhancedFingerKey, enhancedImageSrc } from '@/lib/enhanceFingerprint';
+import { enhancedFingerKey } from '@/lib/enhanceFingerprint';
 import { FlipHorizontal2, Info } from 'lucide-react';
 
 export type FingerKey =
@@ -86,6 +86,7 @@ export default function FingerprintEditorModal({
   const [adjustments, setAdjustments] = useState<ImageAdjustments>(editorDefaults);
   const [saving, setSaving] = useState(false);
   const [applyMirrorToAll, setApplyMirrorToAll] = useState(true);
+  const [previewSrc, setPreviewSrc] = useState('');
 
   // use enhanced image as the edit base if available
   const displayBase64 = hasEnhanced ? enhancedBase64! : imageBase64;
@@ -97,13 +98,31 @@ export default function FingerprintEditorModal({
     }
   }, [open, displayBase64, hasEnhanced]);
 
+  useEffect(() => {
+    let revoked: string | null = null;
+    let cancelled = false;
+    (async () => {
+      const src = await resolveFingerprintDisplaySrc(displayBase64);
+      if (cancelled) {
+        if (src?.startsWith('blob:')) URL.revokeObjectURL(src);
+        return;
+      }
+      if (src?.startsWith('blob:')) revoked = src;
+      setPreviewSrc(src ?? fingerprintImageSrc(displayBase64));
+    })();
+    return () => {
+      cancelled = true;
+      if (revoked) URL.revokeObjectURL(revoked);
+    };
+  }, [displayBase64, open]);
+
   async function handleSave() {
     setSaving(true);
     try {
-      const currentUpdated = await renderAdjustedImageBase64(displayBase64, adjustments);
-      const saveKey = enhancedBase64?.trim()
-        ? enhancedFingerKey(fingerKey)
-        : fingerKey;
+      // Always edit/save the enhanced image when it exists — originals stay untouched.
+      const sourceSrc = hasEnhanced ? enhancedBase64! : imageBase64;
+      const saveKey = hasEnhanced ? enhancedFingerKey(fingerKey) : fingerKey;
+      const currentUpdated = await renderAdjustedImageBase64(sourceSrc, adjustments);
       const updates: Record<string, string> = {
         [saveKey]: currentUpdated,
       };
@@ -121,14 +140,13 @@ export default function FingerprintEditorModal({
           if (key === fingerKey) continue;
 
           const fingerData = allFingerData[key];
-          const targetSrc = fingerData?.enhancedBase64?.trim()
-            ? fingerData.enhancedBase64
+          const hasTargetEnhanced = Boolean(fingerData?.enhancedBase64?.trim());
+          const targetSrc = hasTargetEnhanced
+            ? fingerData!.enhancedBase64!
             : fingerData?.imageBase64;
           if (!targetSrc?.trim()) continue;
 
-          const targetKey = fingerData?.enhancedBase64?.trim()
-            ? enhancedFingerKey(key)
-            : key;
+          const targetKey = hasTargetEnhanced ? enhancedFingerKey(key) : key;
           updates[targetKey] = await renderAdjustedImageBase64(targetSrc, mirrorOnlyAdjustments);
         }
       }
@@ -158,10 +176,6 @@ export default function FingerprintEditorModal({
     adjustments.saturation !== editorDefaults.saturation ||
     adjustments.mirrored !== editorDefaults.mirrored;
 
-  const previewSrc = enhancedBase64?.trim()
-    ? enhancedImageSrc(enhancedBase64)
-    : fingerprintImageSrc(imageBase64);
-
   return (
     <Modal
       open={open}
@@ -171,16 +185,20 @@ export default function FingerprintEditorModal({
     >
       <div className="space-y-6">
         <div className="relative flex justify-center rounded-2xl border border-slate-200 bg-slate-50 p-4">
-          <img
-            src={previewSrc}
-            alt={fingerLabel}
-            className="max-h-[min(50vh,360px)] max-w-full object-contain"
-            style={{
-              filter,
-              transform: adjustments.mirrored ? 'scaleX(-1)' : undefined,
-            }}
-            draggable={false}
-          />
+          {previewSrc ? (
+            <img
+              src={previewSrc}
+              alt={fingerLabel}
+              className="max-h-[min(50vh,360px)] max-w-full object-contain"
+              style={{
+                filter,
+                transform: adjustments.mirrored ? 'scaleX(-1)' : undefined,
+              }}
+              draggable={false}
+            />
+          ) : (
+            <p className="py-16 text-sm text-slate-400">Loading preview…</p>
+          )}
         </div>
 
         <div className="space-y-4">

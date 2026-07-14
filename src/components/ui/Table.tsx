@@ -37,11 +37,25 @@ export function PageButton({ children, className, disabled, ...rest }: any) {
   );
 }
 
-function GlobalFilter({ globalFilter, setGlobalFilter }: any) {
-  const [value, setValue] = React.useState(globalFilter);
+function GlobalFilter({
+  globalFilter,
+  setGlobalFilter,
+  value: controlledValue,
+  onChange,
+}: any) {
+  const isControlled = onChange != null;
+  const [value, setValue] = React.useState(
+    isControlled ? controlledValue : globalFilter,
+  );
+
+  React.useEffect(() => {
+    if (isControlled) setValue(controlledValue ?? "");
+  }, [isControlled, controlledValue]);
+
   const onFilterChange = useAsyncDebounce((val: any) => {
-    setGlobalFilter(val || undefined);
-  }, 200);
+    if (isControlled) onChange(val || "");
+    else setGlobalFilter(val || undefined);
+  }, 300);
 
   return (
     <div className="relative w-full">
@@ -137,6 +151,16 @@ function Table({
   dataName,
   btnfunc,
   headerActions,
+  // Server-side mode (optional — other pages keep client pagination/search)
+  serverSide,
+  pageIndex = 0,
+  pageSize = 10,
+  pageCount = 1,
+  totalCount,
+  searchValue = "",
+  onSearchChange,
+  onPageChange,
+  onPageSizeChange,
 }: any) {
   const isMobile = useIsMobile();
   const {
@@ -155,12 +179,38 @@ function Table({
     setGlobalFilter,
     setPageSize,
   }: any = useTable(
-    { columns, data },
+    {
+      columns,
+      data,
+      ...(serverSide
+        ? {
+            manualPagination: true,
+            manualGlobalFilter: true,
+            pageCount: Math.max(1, pageCount),
+            initialState: { pageIndex: 0, pageSize },
+            autoResetPage: false,
+          }
+        : {}),
+    },
     useFilters,
     useGlobalFilter,
     useSortBy,
-    usePagination
+    usePagination,
   );
+
+  // Keep react-table page index in sync with server page.
+  React.useEffect(() => {
+    if (serverSide) gotoPage(pageIndex);
+  }, [serverSide, pageIndex, gotoPage]);
+
+  React.useEffect(() => {
+    if (serverSide) setPageSize(pageSize);
+  }, [serverSide, pageSize, setPageSize]);
+
+  const displayCount = serverSide ? (totalCount ?? data.length) : data.length;
+  const currentPage = serverSide ? pageIndex + 1 : state.pageIndex + 1;
+  const totalPages = serverSide ? Math.max(1, pageCount) : pageOptions.length;
+  const showPagination = serverSide ? totalPages > 1 || displayCount > 10 : pageOptions.length > 1;
 
   const toolbar = (
     <>
@@ -169,7 +219,7 @@ function Table({
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <h2 className="text-lg font-bold text-slate-900 sm:text-xl">{title}</h2>
             <span className="inline-flex items-center rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-semibold text-indigo-700 ring-1 ring-indigo-100">
-              {data.length} {dataName}
+              {displayCount} {dataName}
             </span>
           </div>
           {subtitle && (
@@ -190,50 +240,72 @@ function Table({
         <GlobalFilter
           globalFilter={state.globalFilter}
           setGlobalFilter={setGlobalFilter}
+          value={serverSide ? searchValue : undefined}
+          onChange={serverSide ? onSearchChange : undefined}
         />
       </div>
     </>
   );
 
-  const pagination =
-    pageOptions.length > 1 ? (
+  const pagination = showPagination ? (
       <nav className="flex flex-col gap-4 border-t border-slate-100 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
         <div className="flex flex-col gap-3 text-sm text-slate-600 sm:flex-row sm:flex-wrap sm:items-center">
           <span>
-            Page <strong className="text-slate-900">{state.pageIndex + 1}</strong> of{" "}
-            <strong className="text-slate-900">{pageOptions.length}</strong>
+            Page <strong className="text-slate-900">{currentPage}</strong> of{" "}
+            <strong className="text-slate-900">{totalPages}</strong>
           </span>
           <label className="flex items-center gap-2">
             Go to
             <input
               type="number"
               min={1}
-              max={pageOptions.length}
-              defaultValue={state.pageIndex + 1}
+              max={totalPages}
+              value={currentPage}
               onChange={(e) => {
                 const p = e.target.value ? Number(e.target.value) - 1 : 0;
-                gotoPage(p);
+                if (serverSide) onPageChange?.(Math.max(0, Math.min(totalPages - 1, p)));
+                else gotoPage(p);
               }}
               className="h-9 w-14 rounded-lg border border-slate-200 px-2 text-center text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
             />
           </label>
           <select
             className="h-9 w-full rounded-lg border border-slate-200 bg-white px-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 sm:w-auto"
-            value={state.pageSize}
-            onChange={(e) => setPageSize(Number(e.target.value))}
+            value={serverSide ? pageSize : state.pageSize}
+            onChange={(e) => {
+              const size = Number(e.target.value);
+              if (serverSide) onPageSizeChange?.(size);
+              else setPageSize(size);
+            }}
           >
-            {[10, 20, 30, 40, 50].map((pageSize) => (
-              <option key={pageSize} value={pageSize}>
-                Show {pageSize}
+            {[10, 20, 30, 40, 50].map((size) => (
+              <option key={size} value={size}>
+                Show {size}
               </option>
             ))}
           </select>
         </div>
         <div className="flex gap-2">
-          <PageButton onClick={() => previousPage()} disabled={!canPreviousPage}>
+          <PageButton
+            onClick={() =>
+              serverSide
+                ? onPageChange?.(Math.max(0, pageIndex - 1))
+                : previousPage()
+            }
+            disabled={serverSide ? pageIndex <= 0 : !canPreviousPage}
+          >
             Previous
           </PageButton>
-          <PageButton onClick={() => nextPage()} disabled={!canNextPage}>
+          <PageButton
+            onClick={() =>
+              serverSide
+                ? onPageChange?.(Math.min(totalPages - 1, pageIndex + 1))
+                : nextPage()
+            }
+            disabled={
+              serverSide ? pageIndex >= totalPages - 1 : !canNextPage
+            }
+          >
             Next
           </PageButton>
         </div>

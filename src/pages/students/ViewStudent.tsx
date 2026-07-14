@@ -12,7 +12,7 @@ import { useNavigate, useParams } from "react-router-dom"
 import { useAuth } from "@/contexts/AuthContext"
 import { canPerform } from "@/lib/permissions"
 import { FingerprintImage } from "@/components/ui/FingerprintImage"
-import { enhancedFingerKey, enhancedImageSrc } from "@/lib/enhanceFingerprint"
+import { enhancedFingerKey } from "@/lib/enhanceFingerprint"
 
 const FINGER_KEYS: FingerKey[] = [
     "finger1",
@@ -60,8 +60,16 @@ const ViewStudent = () => {
         return () => window.removeEventListener("fingerprints-enhanced", onEnhanced)
     }, [id])
 
-    function handleFingerSaved(updates: Record<string, string>) {
-        setData((prev) => ({ ...prev, ...updates }))
+    function handleFingerSaved(_updates: Record<string, string>) {
+        void (async () => {
+            try {
+                const res = await Api.get(`api/student/${id}`)
+                // Backend URLs include file mtime (?v=...) so images reload after edit.
+                setData(res.data.data ?? {})
+            } catch {
+                /* keep local */
+            }
+        })()
     }
 
     if (loading) return <Loader />
@@ -91,7 +99,7 @@ const ViewStudent = () => {
                             <dd className="mt-0.5 font-semibold text-slate-900">{batch?.name}</dd>
                         </div>
                         <div>
-                            <dt className="text-slate-500">Phone</dt>
+                            <dt className="text-slate-500">Registration ID</dt>
                             <dd className="mt-0.5 font-semibold text-slate-900">{String(data.mobile)}</dd>
                         </div>
                         <div>
@@ -111,33 +119,17 @@ const ViewStudent = () => {
                             const label = `Finger ${index + 1}`
                             const alreadyEnhanced = Boolean(enhancedSrc)
 
-                            const displaySrc = alreadyEnhanced
-                                ? enhancedImageSrc(enhancedSrc)
-                                : src
-
                             return (
                                 <div
                                     key={key}
                                     className="surface-card-interactive flex flex-col items-center gap-2 p-3"
                                 >
                                     <div className="relative">
-                                        {alreadyEnhanced ? (
-                                            <div
-                                                className="flex shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white ring-1 ring-indigo-300"
-                                                style={{ width: 138, height: 155 }}
-                                            >
-                                                <img
-                                                    src={displaySrc}
-                                                    alt={label}
-                                                    width={138}
-                                                    height={155}
-                                                    className="h-full w-full object-contain"
-                                                    draggable={false}
-                                                />
-                                            </div>
-                                        ) : (
-                                            <FingerprintImage src={src} alt={label} />
-                                        )}
+                                        <FingerprintImage
+                                            src={alreadyEnhanced ? enhancedSrc : src}
+                                            alt={label}
+                                            className={alreadyEnhanced ? 'ring-indigo-300' : undefined}
+                                        />
                                     </div>
                                     <span className="text-xs font-semibold text-slate-600">
                                         {label}

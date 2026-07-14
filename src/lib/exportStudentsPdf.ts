@@ -1,6 +1,6 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { fingerprintImageSrc } from '@/lib/fingerprintImage';
+import { resolveFingerprintDisplaySrc } from '@/lib/fingerprintImage';
 
 export type StudentPdfRecord = {
   id: string;
@@ -30,31 +30,42 @@ const FINGER_COL_WIDTH_MM = 19;
 const TABLE_FONT_SIZE = 9;
 const TABLE_HEAD_FONT_SIZE = 10;
 
-function toJpegDataUrl(base64: string | undefined | null): Promise<string | null> {
-  if (!base64?.trim()) return Promise.resolve(null);
+function toJpegDataUrl(src: string | undefined | null): Promise<string | null> {
+  if (!src?.trim()) return Promise.resolve(null);
 
-  const src = fingerprintImageSrc(base64);
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => {
-      try {
-        const canvas = document.createElement('canvas');
-        canvas.width = img.naturalWidth;
-        canvas.height = img.naturalHeight;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
+  return resolveFingerprintDisplaySrc(src).then(
+    (resolved) =>
+      new Promise((resolve) => {
+        if (!resolved) {
           resolve(null);
           return;
         }
-        ctx.drawImage(img, 0, 0);
-        resolve(canvas.toDataURL('image/jpeg', 0.9));
-      } catch {
-        resolve(null);
-      }
-    };
-    img.onerror = () => resolve(null);
-    img.src = src;
-  });
+        const img = new Image();
+        img.onload = () => {
+          try {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+              resolve(null);
+              return;
+            }
+            ctx.drawImage(img, 0, 0);
+            resolve(canvas.toDataURL('image/jpeg', 0.9));
+          } catch {
+            resolve(null);
+          } finally {
+            if (resolved.startsWith('blob:')) URL.revokeObjectURL(resolved);
+          }
+        };
+        img.onerror = () => {
+          if (resolved.startsWith('blob:')) URL.revokeObjectURL(resolved);
+          resolve(null);
+        };
+        img.src = resolved;
+      }),
+  );
 }
 
 async function buildImageMap(
@@ -108,7 +119,7 @@ export async function exportStudentsPdf(students: StudentPdfRecord[]) {
     startY: 26,
     tableWidth,
     margin: { left: margin, right: margin },
-    head: [['#', 'Name', 'Batch', 'Phone', ...fingerHeaders]],
+    head: [['#', 'Name', 'Batch', 'Registration ID', ...fingerHeaders]],
     body: students.map((s, i) => [
       String(i + 1),
       s.name,
@@ -122,6 +133,16 @@ export async function exportStudentsPdf(students: StudentPdfRecord[]) {
       minCellHeight: ROW_HEIGHT_MM,
       valign: 'middle',
       overflow: 'linebreak',
+      fillColor: [255, 255, 255],
+      textColor: [30, 41, 59],
+      lineColor: [226, 232, 240],
+      lineWidth: 0.1,
+    },
+    bodyStyles: {
+      fillColor: [255, 255, 255],
+    },
+    alternateRowStyles: {
+      fillColor: [255, 255, 255],
     },
     headStyles: {
       fillColor: [79, 70, 229],

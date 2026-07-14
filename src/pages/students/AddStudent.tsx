@@ -13,7 +13,7 @@ import PageHeader from '@/components/ui/PageHeader';
 import FingerprintSlot from '@/components/ui/FingerprintSlot';
 import Loader from '@/components/ui/Loader';
 import MediaPickerModal from '@/components/media/MediaPickerModal';
-import { enhanceFinger } from '@/lib/enhanceFingerprint';
+import EnhancingOverlay from '@/components/students/EnhancingOverlay';
 
 const initialState = {
     name: "",
@@ -81,166 +81,169 @@ const AddStudent = () => {
 
     return (
         <div className="space-y-6">
-            <PageHeader
-                title={isAdd ? "Add student" : "Edit student"}
-                subtitle="Enter details and capture all five fingerprints"
-                action={
-                    <Button variant="outline" onClick={() => navigate(-1)} className="gap-2">
-                        <ArrowLeft className="h-4 w-4" />
-                        Back
-                    </Button>
-                }
-            />
-
-            <div className="surface-card p-4 sm:p-6 lg:p-8">
-                <Formik
-                    initialValues={formState}
-                    enableReinitialize
-                    onSubmit={async (values, action) => {
-                        try {
-                            if (!isAdd) {
-                                const res = await Api.put(`api/student/${event}`, values);
-                                toast.success(res.data.message);
-                            } else {
-                                const res = await Api.post(`api/student`, values);
-                                const studentId = res.data.data?.id as string | undefined;
-                                toast.success(res.data.message);
-
-                                if (studentId) {
-                                    const filledKeys = fingerKeys.filter((k) => Boolean(values[k]));
-                                    if (filledKeys.length > 0) {
-                                        toast.loading("Enhancing fingerprints in background…", { id: "enhance-bg" });
-                                        Promise.allSettled(
-                                            filledKeys.map((k) => enhanceFinger(studentId, k)),
-                                        ).then((results) => {
-                                            const failed = results.filter((r) => r.status === "rejected").length;
-                                            toast.dismiss("enhance-bg");
-                                            if (failed === 0) {
-                                                toast.success("All fingerprints enhanced");
-                                            } else {
-                                                toast.error(`${failed} enhancement(s) failed`);
-                                            }
-                                            window.dispatchEvent(
-                                                new CustomEvent("fingerprints-enhanced", {
-                                                    detail: { studentId },
-                                                })
-                                            );
-                                        });
-                                    }
-                                }
-                            }
-                            navigate("/student")
-                        } catch (error: unknown) {
-                            const err = error as { response?: { data?: { message?: string } } };
-                            toast.error(err.response?.data?.message ?? "Save failed");
-                        } finally {
-                            action.setSubmitting(false);
+            <Formik
+                initialValues={formState}
+                enableReinitialize
+                onSubmit={async (values, action) => {
+                    try {
+                        if (!isAdd) {
+                            const res = await Api.put(`api/student/${event}`, values);
+                            toast.success(res.data.message);
+                        } else {
+                            const res = await Api.post(`api/student`, values, {
+                                timeout: 180_000, // enhance all 5 fingers server-side
+                            });
+                            toast.success(res.data.message);
                         }
-                    }}
-                >
-                    {(formik) => (
+                        navigate("/student")
+                    } catch (error: unknown) {
+                        const err = error as { response?: { data?: { message?: string } } };
+                        toast.error(err.response?.data?.message ?? "Save failed");
+                    } finally {
+                        action.setSubmitting(false);
+                    }
+                }}
+            >
+                {(formik) => {
+                    const busy = formik.isSubmitting;
+                    const showEnhanceOverlay = isAdd && busy;
+
+                    return (
                         <>
-                        <form onSubmit={formik.handleSubmit} className="space-y-8">
-                            <section>
-                                <h3 className="section-label mb-4">
-                                    Personal information
-                                </h3>
-                                <div className="grid gap-5 sm:grid-cols-2">
-                                    <Input
-                                        name="name"
-                                        label="Full name"
-                                        placeholder="Student name"
-                                        required
-                                        onChange={formik.handleChange}
-                                        value={formik.values.name}
-                                    />
-                                    <Input
-                                        name="mobile"
-                                        label="Phone number"
-                                        placeholder="10-digit mobile"
-                                        required
-                                        onChange={formik.handleChange}
-                                        value={formik.values.mobile}
-                                    />
-                                    <Select
-                                        name="batchId"
-                                        label="Batch"
-                                        onChange={formik.handleChange}
-                                        value={formik.values.batchId}
-                                        required
+                        <EnhancingOverlay open={showEnhanceOverlay} />
+
+                        <fieldset disabled={busy} className="min-w-0 space-y-6 border-0 p-0">
+                            <PageHeader
+                                title={isAdd ? "Add student" : "Edit student"}
+                                subtitle="Enter details and capture all five fingerprints"
+                                action={
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => navigate(-1)}
+                                        className="gap-2"
+                                        disabled={busy}
                                     >
-                                        <option value="">Select a batch</option>
-                                        {batches.map((b) => (
-                                            <option key={b.id} value={b.id}>{b.name}</option>
-                                        ))}
-                                    </Select>
-                                    <div className="sm:col-span-2">
-                                        <Textarea
-                                            name="address"
-                                            label="Address"
-                                            placeholder="Full address"
-                                            rows={3}
-                                            required
-                                            onChange={formik.handleChange}
-                                            value={formik.values.address}
-                                        />
+                                        <ArrowLeft className="h-4 w-4" />
+                                        Back
+                                    </Button>
+                                }
+                            />
+
+                            <div className="surface-card p-4 sm:p-6 lg:p-8">
+                                <form onSubmit={formik.handleSubmit} className="space-y-8">
+                                    <section>
+                                        <h3 className="section-label mb-4">
+                                            Personal information
+                                        </h3>
+                                        <div className="grid gap-5 sm:grid-cols-2">
+                                            <Input
+                                                name="name"
+                                                label="Full name"
+                                                placeholder="Student name"
+                                                required
+                                                disabled={busy}
+                                                onChange={formik.handleChange}
+                                                value={formik.values.name}
+                                            />
+                                            <Input
+                                                name="mobile"
+                                                label="Registration ID"
+                                                placeholder="Registration ID"
+                                                required
+                                                disabled={busy}
+                                                onChange={formik.handleChange}
+                                                value={formik.values.mobile}
+                                            />
+                                            <Select
+                                                name="batchId"
+                                                label="Batch"
+                                                onChange={formik.handleChange}
+                                                value={formik.values.batchId}
+                                                required
+                                                disabled={busy}
+                                            >
+                                                <option value="">Select a batch</option>
+                                                {batches.map((b) => (
+                                                    <option key={b.id} value={b.id}>{b.name}</option>
+                                                ))}
+                                            </Select>
+                                            <div className="sm:col-span-2">
+                                                <Textarea
+                                                    name="address"
+                                                    label="Address"
+                                                    placeholder="Full address (optional)"
+                                                    rows={3}
+                                                    disabled={busy}
+                                                    onChange={formik.handleChange}
+                                                    value={formik.values.address}
+                                                />
+                                            </div>
+                                        </div>
+                                    </section>
+
+                                    <section>
+                                        <div className="mb-4 flex items-center gap-2">
+                                            <Fingerprint className="h-5 w-5 text-indigo-600" />
+                                            <h3 className="section-label">
+                                                Fingerprint capture
+                                            </h3>
+                                        </div>
+                                        <p className="mb-5 text-sm text-slate-500">
+                                            Capture from the scanner or browse images uploaded in Media.
+                                        </p>
+                                        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+                                            {fingerKeys.map((key, i) => (
+                                                <FingerprintSlot
+                                                    key={key}
+                                                    label={`Finger ${i + 1}`}
+                                                    value={formik.values[key]}
+                                                    disabled={busy}
+                                                    onCapture={async () => {
+                                                        if (busy) return
+                                                        const print = await getFingerPrint()
+                                                        if (print) {
+                                                            formik.setFieldValue(key, print)
+                                                            toast.success(`Finger ${i + 1} captured`)
+                                                        }
+                                                    }}
+                                                    onBrowse={() => {
+                                                        if (busy) return
+                                                        setBrowseFinger(key)
+                                                    }}
+                                                />
+                                            ))}
+                                        </div>
+                                    </section>
+
+                                    <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-6 sm:flex-row sm:justify-end">
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            disabled={busy}
+                                            onClick={() => navigate(-1)}
+                                        >
+                                            Cancel
+                                        </Button>
+                                        <Button
+                                            disabled={busy}
+                                            type="submit"
+                                            className="min-w-[140px]"
+                                        >
+                                            {busy
+                                                ? isAdd
+                                                  ? "Processing…"
+                                                  : "Saving…"
+                                                : isAdd
+                                                  ? "Create student"
+                                                  : "Save changes"}
+                                        </Button>
                                     </div>
-                                </div>
-                            </section>
-
-                            <section>
-                                <div className="mb-4 flex items-center gap-2">
-                                    <Fingerprint className="h-5 w-5 text-indigo-600" />
-                                    <h3 className="section-label">
-                                        Fingerprint capture
-                                    </h3>
-                                </div>
-                                <p className="mb-5 text-sm text-slate-500">
-                                    Capture from the scanner or browse images uploaded in Media.
-                                </p>
-                                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-                                    {fingerKeys.map((key, i) => (
-                                        <FingerprintSlot
-                                            key={key}
-                                            label={`Finger ${i + 1}`}
-                                            value={formik.values[key]}
-                                            onCapture={async () => {
-                                                const print = await getFingerPrint()
-                                                if (print) {
-                                                    formik.setFieldValue(key, print)
-                                                    toast.success(`Finger ${i + 1} captured`)
-                                                }
-                                            }}
-                                            onBrowse={() => setBrowseFinger(key)}
-                                        />
-                                    ))}
-                                </div>
-                            </section>
-
-                            <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-6 sm:flex-row sm:justify-end">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={() => navigate(-1)}
-                                >
-                                    Cancel
-                                </Button>
-                                <Button
-                                    disabled={formik.isSubmitting}
-                                    type="submit"
-                                    className="min-w-[140px]"
-                                >
-                                    {formik.isSubmitting
-                                        ? "Saving…"
-                                        : isAdd
-                                          ? "Create student"
-                                          : "Save changes"}
-                                </Button>
+                                </form>
                             </div>
-                        </form>
+                        </fieldset>
 
                         <MediaPickerModal
-                            open={Boolean(browseFinger)}
+                            open={Boolean(browseFinger) && !busy}
                             onClose={() => setBrowseFinger(null)}
                             title={
                                 browseFinger
@@ -248,15 +251,15 @@ const AddStudent = () => {
                                     : 'Select from media'
                             }
                             onSelect={(image) => {
-                                if (!browseFinger) return
+                                if (!browseFinger || busy) return
                                 formik.setFieldValue(browseFinger, image)
                                 toast.success(`Finger ${browseFinger.replace('finger', '')} selected from media`)
                             }}
                         />
                         </>
-                    )}
-                </Formik>
-            </div>
+                    );
+                }}
+            </Formik>
         </div>
     )
 }

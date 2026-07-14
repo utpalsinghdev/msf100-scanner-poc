@@ -1,10 +1,19 @@
 import JSZip from 'jszip';
 import type { StudentPdfRecord } from '@/lib/exportStudentsPdf';
+import Api from '@/lib/api';
+import { isRemoteFingerprintSrc } from '@/lib/fingerprintImage';
 
 const FINGER_KEYS = ['finger1', 'finger2', 'finger3', 'finger4', 'finger5'] as const;
 
 function sanitizePathSegment(name: string): string {
   return name.replace(/[<>:"/\\|?*\x00-\x1f]/g, '_').trim() || 'unnamed';
+}
+
+function fingerprintExtensionFromBytes(bytes: Uint8Array): string {
+  if (bytes.length >= 8 && bytes[0] === 0x89 && bytes[1] === 0x50) return 'png';
+  if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8) return 'jpg';
+  if (bytes.length >= 2 && bytes[0] === 0x42 && bytes[1] === 0x4d) return 'bmp';
+  return 'bin';
 }
 
 function fingerprintExtension(base64: string): string {
@@ -23,6 +32,20 @@ function base64ToUint8Array(base64: string): Uint8Array {
     bytes[i] = binary.charCodeAt(i);
   }
   return bytes;
+}
+
+async function loadFingerBytes(src: string): Promise<{ bytes: Uint8Array; ext: string } | null> {
+  if (!src?.trim()) return null;
+  if (isRemoteFingerprintSrc(src)) {
+    const path = src.replace(/^\//, '');
+    const res = await Api.get(path, { responseType: 'arraybuffer' });
+    const bytes = new Uint8Array(res.data as ArrayBuffer);
+    return { bytes, ext: fingerprintExtensionFromBytes(bytes) };
+  }
+  return {
+    bytes: base64ToUint8Array(src),
+    ext: fingerprintExtension(src),
+  };
 }
 
 function uniqueFolderName(base: string, used: Set<string>): string {
@@ -77,10 +100,9 @@ export async function exportStudentsZip(students: StudentPdfRecord[]) {
       const raw = student[enhancedKey] as string | undefined | null;
       const image = (raw?.trim() ? raw : student[key])?.trim();
       if (!image) continue;
-      zip.file(
-        `${prefix}${key}.${fingerprintExtension(image)}`,
-        base64ToUint8Array(image),
-      );
+      const loaded = await loadFingerBytes(image);
+      if (!loaded) continue;
+      zip.file(`${prefix}${key}.${loaded.ext}`, loaded.bytes);
     }
   }
 

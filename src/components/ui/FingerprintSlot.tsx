@@ -6,6 +6,7 @@ import { CheckCircle2 } from 'lucide-react';
 type FingerprintSlotProps = {
   label: string;
   value?: string;
+  disabled?: boolean;
   onCapture: () => void | Promise<void>;
   onBrowse?: () => void;
 };
@@ -13,6 +14,7 @@ type FingerprintSlotProps = {
 export default function FingerprintSlot({
   label,
   value,
+  disabled,
   onCapture,
   onBrowse,
 }: FingerprintSlotProps) {
@@ -25,6 +27,7 @@ export default function FingerprintSlot({
         captured
           ? 'border-indigo-200/80 bg-gradient-to-b from-indigo-50/80 to-white shadow-soft ring-1 ring-indigo-100/80'
           : 'border-slate-200/80 bg-white shadow-sm hover:border-slate-300 hover:shadow-soft',
+        disabled && 'pointer-events-none opacity-60',
       )}
     >
       <div className="relative">
@@ -41,6 +44,7 @@ export default function FingerprintSlot({
         variant={captured ? 'secondary' : 'outline'}
         size="sm"
         className="w-full"
+        disabled={disabled}
         onClick={onCapture}
       >
         {captured ? `Recapture` : `Capture`}
@@ -51,6 +55,7 @@ export default function FingerprintSlot({
           variant="outline"
           size="sm"
           className="w-full"
+          disabled={disabled}
           onClick={onBrowse}
         >
           Browse

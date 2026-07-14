@@ -1,5 +1,10 @@
+import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
-import { fingerprintImageSrc } from '@/lib/fingerprintImage';
+import {
+  fetchFingerprintBlobUrl,
+  fingerprintImageSrc,
+  isRemoteFingerprintSrc,
+} from '@/lib/fingerprintImage';
 import { Fingerprint } from 'lucide-react';
 
 /** MFS100 bitmap display size (316×354 intrinsic → 138×155 rendered). */
@@ -24,6 +29,45 @@ export function FingerprintImage({
   showEmptyIcon = false,
   className,
 }: FingerprintImageProps) {
+  const [displaySrc, setDisplaySrc] = useState<string>('');
+
+  useEffect(() => {
+    let cancelled = false;
+    let objectUrl: string | null = null;
+
+    setDisplaySrc('');
+
+    async function load() {
+      if (!src?.trim()) return;
+
+      if (!isRemoteFingerprintSrc(src)) {
+        if (!cancelled) setDisplaySrc(fingerprintImageSrc(src));
+        return;
+      }
+
+      try {
+        const url = await fetchFingerprintBlobUrl(src);
+        if (cancelled) {
+          URL.revokeObjectURL(url);
+          return;
+        }
+        objectUrl = url;
+        setDisplaySrc(url);
+      } catch {
+        if (!cancelled) setDisplaySrc('');
+      }
+    }
+
+    load();
+
+    return () => {
+      cancelled = true;
+      // Clear before revoke so <img> never keeps a dead blob (alt="fingerprint").
+      setDisplaySrc('');
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [src]);
+
   return (
     <div
       className={cn(
@@ -36,9 +80,10 @@ export function FingerprintImage({
         aspectRatio: FINGERPRINT_DISPLAY.aspectRatio,
       }}
     >
-      {src ? (
+      {displaySrc ? (
         <img
-          src={fingerprintImageSrc(src)}
+          key={displaySrc}
+          src={displaySrc}
           alt={alt}
           width={FINGERPRINT_DISPLAY.width}
           height={FINGERPRINT_DISPLAY.height}
