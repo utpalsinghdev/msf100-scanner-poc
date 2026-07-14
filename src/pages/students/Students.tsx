@@ -21,15 +21,22 @@ type ListMeta = {
 };
 
 const PAGE_SIZES = [10, 20, 30, 40, 50] as const;
+const FINGER_COUNTS = [1, 2, 3, 4, 5] as const;
+const DEFAULT_FINGER_COUNT = 3;
 
 function listParamsFromUrl(sp: URLSearchParams) {
     const page = Math.max(1, parseInt(sp.get("page") ?? "1", 10) || 1);
     const rawLimit = parseInt(sp.get("limit") ?? "10", 10) || 10;
     const pageSize = (PAGE_SIZES as readonly number[]).includes(rawLimit) ? rawLimit : 10;
+    const rawFingers = parseInt(sp.get("fingers") ?? String(DEFAULT_FINGER_COUNT), 10) || DEFAULT_FINGER_COUNT;
+    const fingerCount = (FINGER_COUNTS as readonly number[]).includes(rawFingers)
+        ? rawFingers
+        : DEFAULT_FINGER_COUNT;
     return {
         pageIndex: page - 1,
         pageSize,
         search: sp.get("q") ?? "",
+        fingerCount,
     };
 }
 
@@ -37,7 +44,7 @@ const Students = () => {
     const navigate = useNavigate()
     const [searchParams, setSearchParams] = useSearchParams();
     const { user } = useAuth()
-    const { pageIndex, pageSize, search } = useMemo(
+    const { pageIndex, pageSize, search, fingerCount } = useMemo(
         () => listParamsFromUrl(searchParams),
         [searchParams],
     );
@@ -56,11 +63,12 @@ const Students = () => {
     const [downloading, setDownloading] = useState(false);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-    /** Keep page / limit / search in the URL so Back from view/edit restores this list. */
+    /** Keep page / limit / search / finger columns in the URL so Back restores this list. */
     function setListParams(patch: {
         pageIndex?: number;
         pageSize?: number;
         search?: string;
+        fingerCount?: number;
     }) {
         setSearchParams(
             (prev) => {
@@ -68,10 +76,14 @@ const Students = () => {
                 const pageIndex = patch.pageIndex ?? next.pageIndex;
                 const pageSize = patch.pageSize ?? next.pageSize;
                 const search = patch.search ?? next.search;
+                const fingerCount = patch.fingerCount ?? next.fingerCount;
                 const sp = new URLSearchParams();
                 if (pageIndex > 0) sp.set("page", String(pageIndex + 1));
                 if (pageSize !== 10) sp.set("limit", String(pageSize));
                 if (search.trim()) sp.set("q", search);
+                if (fingerCount !== DEFAULT_FINGER_COUNT) {
+                    sp.set("fingers", String(fingerCount));
+                }
                 return sp;
             },
             { replace: true },
@@ -231,7 +243,7 @@ const Students = () => {
                     </span>
                 ),
             },
-            ...[1, 2, 3, 4, 5].map((n) => ({
+            ...Array.from({ length: fingerCount }, (_, i) => i + 1).map((n) => ({
                 Header: `F${n}`,
                 accessor: `finger${n}`,
                 Cell: (cell: any) => {
@@ -307,6 +319,7 @@ const Students = () => {
             selectedIds,
             pageIndex,
             pageSize,
+            fingerCount,
             user,
             navigate,
             fetchData,
@@ -332,34 +345,53 @@ const Students = () => {
                 setListParams({ pageSize: size, pageIndex: 0 });
             }}
             headerActions={
-                canPerform(user, 'view') ? (
-                    <>
-                        {selectedIds.size > 0 && (
+                <>
+                    <label className="flex w-full items-center gap-2 text-sm text-slate-600 sm:w-auto">
+                        <span className="whitespace-nowrap">Show fingers</span>
+                        <select
+                            className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-sm text-slate-900 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                            value={fingerCount}
+                            onChange={(e) =>
+                                setListParams({ fingerCount: Number(e.target.value) })
+                            }
+                            aria-label="Number of fingerprint columns to show"
+                        >
+                            {FINGER_COUNTS.map((n) => (
+                                <option key={n} value={n}>
+                                    {n}
+                                </option>
+                            ))}
+                        </select>
+                    </label>
+                    {canPerform(user, "view") && (
+                        <>
+                            {selectedIds.size > 0 && (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="w-full gap-2 sm:w-auto"
+                                    disabled={downloading}
+                                    onClick={handleDownloadZip}
+                                >
+                                    <Archive className="h-4 w-4" />
+                                    {downloading
+                                        ? "Preparing ZIP…"
+                                        : `Download (${selectedIds.size})`}
+                                </Button>
+                            )}
                             <Button
                                 type="button"
                                 variant="outline"
                                 className="w-full gap-2 sm:w-auto"
-                                disabled={downloading}
-                                onClick={handleDownloadZip}
+                                disabled={exporting || meta.total === 0}
+                                onClick={handleExportPdf}
                             >
-                                <Archive className="h-4 w-4" />
-                                {downloading
-                                    ? "Preparing ZIP…"
-                                    : `Download (${selectedIds.size})`}
+                                <FileDown className="h-4 w-4" />
+                                {exporting ? "Exporting…" : "Export PDF"}
                             </Button>
-                        )}
-                        <Button
-                            type="button"
-                            variant="outline"
-                            className="w-full gap-2 sm:w-auto"
-                            disabled={exporting || meta.total === 0}
-                            onClick={handleExportPdf}
-                        >
-                            <FileDown className="h-4 w-4" />
-                            {exporting ? "Exporting…" : "Export PDF"}
-                        </Button>
-                    </>
-                ) : undefined
+                        </>
+                    )}
+                </>
             }
             btnText={canPerform(user, 'add') ? "Add student" : undefined}
             btnfunc={canPerform(user, 'add') ? () => navigate("/student/add") : undefined}
