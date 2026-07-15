@@ -2,6 +2,8 @@ import axios from 'axios';
 
 export const Api = axios.create({
   baseURL: import.meta.env.VITE_BASE_URL,
+  // Slow ops (enhance / export / large lists) can exceed 2 minutes behind the proxy.
+  timeout: 600_000, // 10 minutes
 });
 
 Api.interceptors.request.use((config) => {
