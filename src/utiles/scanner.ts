@@ -63,7 +63,20 @@ async function PostMFS100Client(method: string, jsonData: string) {
         const data = await response.json();
         return { httpStatus: true, data };
     } catch (error: any) {
-        return { httpStatus: false, err: error.message };
+        const msg = String(error?.message ?? error ?? '');
+        // Browser blocks Mantra's self-signed cert until the user trusts it once.
+        if (
+            msg.includes('Failed to fetch') ||
+            msg.includes('NetworkError') ||
+            msg.includes('SSL') ||
+            msg.includes('certificate')
+        ) {
+            return {
+                httpStatus: false,
+                err: 'Scanner SSL not trusted. Open https://localhost:8003 in this browser, click Advanced → Proceed, then try Capture again.',
+            };
+        }
+        return { httpStatus: false, err: msg || 'Capture failed' };
     }
 }
 

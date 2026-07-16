@@ -37,6 +37,7 @@ function listParamsFromUrl(sp: URLSearchParams) {
         pageSize,
         search: sp.get("q") ?? "",
         fingerCount,
+        batchId: sp.get("batch") ?? "",
     };
 }
 
@@ -44,7 +45,7 @@ const Students = () => {
     const navigate = useNavigate()
     const [searchParams, setSearchParams] = useSearchParams();
     const { user } = useAuth()
-    const { pageIndex, pageSize, search, fingerCount } = useMemo(
+    const { pageIndex, pageSize, search, fingerCount, batchId } = useMemo(
         () => listParamsFromUrl(searchParams),
         [searchParams],
     );
@@ -53,6 +54,7 @@ const Students = () => {
         loading: true,
         data: [] as StudentPdfRecord[],
     });
+    const [batches, setBatches] = useState<{ id: string; name: string }[]>([]);
     const [meta, setMeta] = useState<ListMeta>({
         total: 0,
         page: 1,
@@ -63,12 +65,13 @@ const Students = () => {
     const [downloading, setDownloading] = useState(false);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-    /** Keep page / limit / search / finger columns in the URL so Back restores this list. */
+    /** Keep page / limit / search / finger columns / batch in the URL so Back restores this list. */
     function setListParams(patch: {
         pageIndex?: number;
         pageSize?: number;
         search?: string;
         fingerCount?: number;
+        batchId?: string;
     }) {
         setSearchParams(
             (prev) => {
@@ -77,6 +80,7 @@ const Students = () => {
                 const pageSize = patch.pageSize ?? next.pageSize;
                 const search = patch.search ?? next.search;
                 const fingerCount = patch.fingerCount ?? next.fingerCount;
+                const batchId = patch.batchId ?? next.batchId;
                 const sp = new URLSearchParams();
                 if (pageIndex > 0) sp.set("page", String(pageIndex + 1));
                 if (pageSize !== 10) sp.set("limit", String(pageSize));
@@ -84,6 +88,7 @@ const Students = () => {
                 if (fingerCount !== DEFAULT_FINGER_COUNT) {
                     sp.set("fingers", String(fingerCount));
                 }
+                if (batchId.trim()) sp.set("batch", batchId);
                 return sp;
             },
             { replace: true },
@@ -124,6 +129,7 @@ const Students = () => {
                     page: pageIndex + 1,
                     limit: pageSize,
                     search: search.trim() || undefined,
+                    batchId: batchId.trim() || undefined,
                 },
             });
             setNews({
@@ -138,12 +144,27 @@ const Students = () => {
             toast.error("Failed to load students");
             setNews((prev) => ({ ...prev, loading: false }));
         }
-    }, [pageIndex, pageSize, search]);
+    }, [pageIndex, pageSize, search, batchId]);
 
     useEffect(() => {
         fetchData();
     }, [fetchData]);
 
+    useEffect(() => {
+        void (async () => {
+            try {
+                const res = await Api.get("api/batch");
+                setBatches(
+                    (res.data.data ?? []).map((b: { id: string; name: string }) => ({
+                        id: b.id,
+                        name: b.name,
+                    })),
+                );
+            } catch {
+                /* ignore — filter just stays empty */
+            }
+        })();
+    }, []);
     // Silent refetch on focus so edits from view-student show up without stale blobs.
     useEffect(() => {
         const onFocus = () => fetchData(true);
@@ -346,6 +367,24 @@ const Students = () => {
             }}
             headerActions={
                 <>
+                    <label className="flex w-full items-center gap-2 text-sm text-slate-600 sm:w-auto">
+                        <span className="whitespace-nowrap">Batch</span>
+                        <select
+                            className="h-9 max-w-[12rem] rounded-lg border border-slate-200 bg-white px-2 text-sm text-slate-900 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                            value={batchId}
+                            onChange={(e) =>
+                                setListParams({ batchId: e.target.value, pageIndex: 0 })
+                            }
+                            aria-label="Filter by batch"
+                        >
+                            <option value="">All batches</option>
+                            {batches.map((b) => (
+                                <option key={b.id} value={b.id}>
+                                    {b.name}
+                                </option>
+                            ))}
+                        </select>
+                    </label>
                     <label className="flex w-full items-center gap-2 text-sm text-slate-600 sm:w-auto">
                         <span className="whitespace-nowrap">Show fingers</span>
                         <select

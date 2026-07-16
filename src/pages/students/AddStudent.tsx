@@ -51,7 +51,7 @@ const AddStudent = () => {
         try {
             const fprint = await CaptureFinger(60, 5000)
             if (!fprint.httpStatus || !fprint.data?.BitmapData) {
-                toast.error("Fingerprint capture failed")
+                toast.error(fprint.err || "Fingerprint capture failed")
                 return
             }
             return fprint.data.BitmapData

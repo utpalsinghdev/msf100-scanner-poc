@@ -28,6 +28,7 @@ const ViewStudent = () => {
     const { user } = useAuth()
     const [data, setData] = useState<Record<string, unknown>>({})
     const [loading, setLoading] = useState(true)
+    const [fixingGray, setFixingGray] = useState(false)
     const [editor, setEditor] = useState<{
         key: FingerKey
         label: string
@@ -72,6 +73,33 @@ const ViewStudent = () => {
         })()
     }
 
+    async function handleFixGrayBackground() {
+        if (!id || fixingGray) return
+        setFixingGray(true)
+        try {
+            const res = await Api.get(`api/student/${id}/analyze-gray-background`)
+            const result = res.data.data as {
+                correctedCount?: number
+                grayCount?: number
+            }
+            const fixed = result.correctedCount ?? result.grayCount ?? 0
+            if (fixed > 0) {
+                toast.success(
+                    fixed === 1
+                        ? "Gray background fixed on 1 finger"
+                        : `Gray background fixed on ${fixed} fingers`,
+                )
+                await fetchStudent()
+            } else {
+                toast("No grey background found")
+            }
+        } catch {
+            toast.error("Failed to fix gray background")
+        } finally {
+            setFixingGray(false)
+        }
+    }
+
     if (loading) return <Loader />
 
     const batch = data.batch as { name?: string } | undefined
@@ -83,10 +111,21 @@ const ViewStudent = () => {
                 title={String(data.name ?? "Student")}
                 subtitle="Student profile and fingerprint records"
                 action={
-                    <Button variant="outline" onClick={() => navigate(-1)} className="gap-2">
-                        <ArrowLeft className="h-4 w-4" />
-                        Back
-                    </Button>
+                    <div className="flex flex-wrap gap-2">
+                        {canEdit && (
+                            <Button
+                                variant="outline"
+                                disabled={fixingGray}
+                                onClick={() => void handleFixGrayBackground()}
+                            >
+                                {fixingGray ? "Fixing…" : "Fix gray background"}
+                            </Button>
+                        )}
+                        <Button variant="outline" onClick={() => navigate(-1)} className="gap-2">
+                            <ArrowLeft className="h-4 w-4" />
+                            Back
+                        </Button>
+                    </div>
                 }
             />
 
