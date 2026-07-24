@@ -1,26 +1,14 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { resolveFingerprintDisplaySrc } from '@/lib/fingerprintImage';
+import {
+  EXPORT_FINGER_KEYS,
+  buildExportImageMap,
+  exportDateSlug,
+  type StudentExportRecord,
+} from '@/lib/exportStudentsShared';
 
-export type StudentPdfRecord = {
-  id: string;
-  name: string;
-  mobile: string;
-  address: string;
-  batch?: { name?: string } | null;
-  finger1?: string | null;
-  finger2?: string | null;
-  finger3?: string | null;
-  finger4?: string | null;
-  finger5?: string | null;
-  finger1Enhanced?: string | null;
-  finger2Enhanced?: string | null;
-  finger3Enhanced?: string | null;
-  finger4Enhanced?: string | null;
-  finger5Enhanced?: string | null;
-};
-
-const FINGER_KEYS = ['finger1', 'finger2', 'finger3', 'finger4', 'finger5'] as const;
+/** @deprecated Prefer StudentExportRecord — kept for existing imports. */
+export type StudentPdfRecord = StudentExportRecord;
 
 /** 138×155 aspect, compact prints; columns fill portrait A4 width */
 const CELL_IMG_WIDTH_MM = 15;
@@ -30,71 +18,12 @@ const FINGER_COL_WIDTH_MM = 19;
 const TABLE_FONT_SIZE = 9;
 const TABLE_HEAD_FONT_SIZE = 10;
 
-function toJpegDataUrl(src: string | undefined | null): Promise<string | null> {
-  if (!src?.trim()) return Promise.resolve(null);
-
-  return resolveFingerprintDisplaySrc(src).then(
-    (resolved) =>
-      new Promise((resolve) => {
-        if (!resolved) {
-          resolve(null);
-          return;
-        }
-        const img = new Image();
-        img.onload = () => {
-          try {
-            const canvas = document.createElement('canvas');
-            canvas.width = img.naturalWidth;
-            canvas.height = img.naturalHeight;
-            const ctx = canvas.getContext('2d');
-            if (!ctx) {
-              resolve(null);
-              return;
-            }
-            ctx.drawImage(img, 0, 0);
-            resolve(canvas.toDataURL('image/jpeg', 0.9));
-          } catch {
-            resolve(null);
-          } finally {
-            if (resolved.startsWith('blob:')) URL.revokeObjectURL(resolved);
-          }
-        };
-        img.onerror = () => {
-          if (resolved.startsWith('blob:')) URL.revokeObjectURL(resolved);
-          resolve(null);
-        };
-        img.src = resolved;
-      }),
-  );
-}
-
-async function buildImageMap(
-  students: StudentPdfRecord[],
-): Promise<Map<string, string>> {
-  const map = new Map<string, string>();
-  await Promise.all(
-    students.flatMap((student, rowIndex) =>
-      FINGER_KEYS.map(async (key) => {
-        const enhancedKey = `${key}Enhanced` as keyof StudentPdfRecord;
-        const src = (student[enhancedKey] as string | null | undefined)?.trim()
-          ? (student[enhancedKey] as string)
-          : student[key];
-        const dataUrl = await toJpegDataUrl(src);
-        if (dataUrl) {
-          map.set(`${rowIndex}-${key}`, dataUrl);
-        }
-      }),
-    ),
-  );
-  return map;
-}
-
-export async function exportStudentsPdf(students: StudentPdfRecord[]) {
+export async function exportStudentsPdf(students: StudentExportRecord[]) {
   if (students.length === 0) {
     throw new Error('No students to export');
   }
 
-  const imageMap = await buildImageMap(students);
+  const imageMap = await buildExportImageMap(students);
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
@@ -113,7 +42,7 @@ export async function exportStudentsPdf(students: StudentPdfRecord[]) {
   doc.setTextColor(100, 116, 139);
   doc.text(`Generated: ${generatedAt}  •  ${students.length} student(s)`, margin, 21);
 
-  const fingerHeaders = FINGER_KEYS.map((_, i) => `F${i + 1}`);
+  const fingerHeaders = EXPORT_FINGER_KEYS.map((_, i) => `F${i + 1}`);
 
   autoTable(doc, {
     startY: 26,
@@ -125,7 +54,7 @@ export async function exportStudentsPdf(students: StudentPdfRecord[]) {
       s.name,
       s.batch?.name ?? '—',
       s.mobile,
-      ...FINGER_KEYS.map(() => ''),
+      ...EXPORT_FINGER_KEYS.map(() => ''),
     ]),
     styles: {
       fontSize: TABLE_FONT_SIZE,
@@ -165,7 +94,7 @@ export async function exportStudentsPdf(students: StudentPdfRecord[]) {
       if (data.section !== 'body' || data.column.index < 4) return;
 
       const fingerIndex = data.column.index - 4;
-      const fingerKey = FINGER_KEYS[fingerIndex];
+      const fingerKey = EXPORT_FINGER_KEYS[fingerIndex];
       const img = imageMap.get(`${data.row.index}-${fingerKey}`);
       if (!img || !data.cell) return;
 
@@ -176,6 +105,5 @@ export async function exportStudentsPdf(students: StudentPdfRecord[]) {
     },
   });
 
-  const dateSlug = new Date().toISOString().slice(0, 10);
-  doc.save(`students-${dateSlug}.pdf`);
+  doc.save(`students-${exportDateSlug()}.pdf`);
 }

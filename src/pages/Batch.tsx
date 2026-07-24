@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Loader from "@/components/ui/Loader";
 import Modal from "@/components/ui/Modal";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import Table from "@/components/ui/Table"
 import Api from "@/lib/api";
 import { Formik } from "formik";
@@ -22,6 +23,8 @@ const initialModalState = {
 const Batch = () => {
     const { user } = useAuth();
     const [modal, setModal] = useState(initialModalState);
+    const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+    const [deleting, setDeleting] = useState(false);
 
     const [news, setNews] = useState({
         loading: true,
@@ -43,6 +46,24 @@ const Batch = () => {
     useEffect(() => {
         fetchData()
     }, [])
+
+    async function confirmDeleteBatch() {
+        if (!pendingDeleteId) return;
+        setDeleting(true);
+        try {
+            const res = await Api.delete(`api/batch/${pendingDeleteId}`);
+            toast.success(res.data.message);
+            setNews((prev: any) => ({
+                ...prev,
+                data: prev.data?.filter((n: any) => n.id !== pendingDeleteId),
+            }));
+            setPendingDeleteId(null);
+        } catch (error: any) {
+            toast.error(error.response?.data?.message ?? "Delete failed");
+        } finally {
+            setDeleting(false);
+        }
+    }
 
     function closeModal() {
         setModal(initialModalState);
@@ -160,19 +181,7 @@ const Batch = () => {
                     )}
                     {canPerform(user, 'delete') && (
                     <Badge
-                        onClick={async () => {
-                            if (!window.confirm("Delete this batch and all its students?")) return;
-                            try {
-                                const res = await Api.delete(`api/batch/${cell.row.original.id}`);
-                                toast.success(res.data.message);
-                                setNews((prev: any) => ({
-                                    ...prev,
-                                    data: prev.data?.filter((n: any) => n.id !== cell.row.original.id),
-                                }));
-                            } catch (error: any) {
-                                toast.error(error.response?.data?.message ?? "Delete failed");
-                            }
-                        }}
+                        onClick={() => setPendingDeleteId(cell.row.original.id)}
                         type={enums.RED}
                     >
                         Delete
@@ -205,6 +214,14 @@ const Batch = () => {
                     columns={columns()}
                 />
             )}
+            <ConfirmDialog
+                open={Boolean(pendingDeleteId)}
+                title="Delete batch"
+                message="Delete this batch and all its students?"
+                loading={deleting}
+                onCancel={() => !deleting && setPendingDeleteId(null)}
+                onConfirm={confirmDeleteBatch}
+            />
         </>
     );
 }

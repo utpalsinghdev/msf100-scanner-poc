@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/PasswordInput';
 import Modal from '@/components/ui/Modal';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { Formik } from 'formik';
 import Badge, { enums } from '@/components/ui/Badge';
 import type { UserRole } from '@/types/auth';
@@ -168,6 +169,8 @@ export default function Users() {
     editId: string;
     data: typeof emptyForm;
   }>({ open: false, editId: '', data: emptyForm });
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   async function fetchUsers() {
     setLoading(true);
@@ -203,15 +206,19 @@ export default function Users() {
       },
     });
 
-  const deleteUser = async (id: string) => {
-    if (!window.confirm('Delete this user?')) return;
+  const deleteUser = async () => {
+    if (!pendingDeleteId) return;
+    setDeleting(true);
     try {
-      const res = await Api.delete(`api/user/${id}`);
+      const res = await Api.delete(`api/user/${pendingDeleteId}`);
       toast.success(res.data.message);
+      setPendingDeleteId(null);
       fetchUsers();
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } } };
       toast.error(e.response?.data?.message ?? 'Delete failed');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -248,7 +255,7 @@ export default function Users() {
                 user={u}
                 onView={() => setViewUser(u)}
                 onEdit={() => openEdit(u)}
-                onDelete={() => deleteUser(u.id)}
+                onDelete={() => setPendingDeleteId(u.id)}
               />
             ))
           )}
@@ -324,7 +331,7 @@ export default function Users() {
                             Edit
                           </Badge>
                         )}
-                        <Badge type={enums.RED} onClick={() => deleteUser(u.id)}>
+                        <Badge type={enums.RED} onClick={() => setPendingDeleteId(u.id)}>
                           Delete
                         </Badge>
                       </span>
@@ -515,6 +522,15 @@ export default function Users() {
           )}
         </Formik>
       </Modal>
+
+      <ConfirmDialog
+        open={Boolean(pendingDeleteId)}
+        title="Delete user"
+        message="Delete this user? This cannot be undone."
+        loading={deleting}
+        onCancel={() => !deleting && setPendingDeleteId(null)}
+        onConfirm={deleteUser}
+      />
     </div>
   );
 }

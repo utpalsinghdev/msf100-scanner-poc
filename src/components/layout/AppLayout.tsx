@@ -12,15 +12,23 @@ import {
   Menu,
   X,
   Images,
+  KeyRound,
+  ChevronDown,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { SessionUser } from '@/types/auth';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 
 export default function AppLayout() {
   const { user, logout, hasRole } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   const links = hasRole('MasterAdmin')
     ? [
@@ -146,10 +154,6 @@ export default function AppLayout() {
             <div className="hidden flex-1 lg:block" />
 
             <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-              <div className="hidden max-w-[140px] truncate text-right sm:block lg:max-w-none">
-                <p className="truncate text-sm font-semibold text-slate-800">{user?.name}</p>
-                <p className="text-xs text-slate-500">{user?.role}</p>
-              </div>
               <a
                 href="/MFS100Driver_9.1.1.0andClientService9.0.3.8.zip"
                 download
@@ -159,6 +163,47 @@ export default function AppLayout() {
                 <Download className="h-4 w-4 shrink-0" />
                 <span className="hidden text-sm font-medium md:inline">Drivers</span>
               </a>
+
+              <Popover open={userMenuOpen} onOpenChange={setUserMenuOpen}>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className="inline-flex max-w-[11rem] items-center gap-2 rounded-xl border border-slate-200/80 bg-white px-2.5 py-1.5 text-left shadow-soft transition hover:border-indigo-200 sm:max-w-xs sm:px-3 sm:py-2"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-slate-800">
+                        {user?.name}
+                      </p>
+                      <p className="truncate text-xs text-slate-500">{user?.role}</p>
+                    </div>
+                    <ChevronDown className="h-4 w-4 shrink-0 text-slate-400" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent align="end" className="w-52 p-1.5">
+                  <button
+                    type="button"
+                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-700 transition hover:bg-slate-100"
+                    onClick={() => {
+                      setUserMenuOpen(false);
+                      navigate('/change-password');
+                    }}
+                  >
+                    <KeyRound className="h-4 w-4" />
+                    Change password
+                  </button>
+                  <button
+                    type="button"
+                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-red-600 transition hover:bg-red-50"
+                    onClick={() => {
+                      setUserMenuOpen(false);
+                      handleLogout();
+                    }}
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Sign out
+                  </button>
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
         </header>

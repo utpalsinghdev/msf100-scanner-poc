@@ -9,9 +9,17 @@ import { useAuth } from "@/contexts/AuthContext";
 import { canPerform } from "@/lib/permissions";
 import { FingerprintImage } from "@/components/ui/FingerprintImage";
 import { Button } from "@/components/ui/button";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { exportStudentsPdf, type StudentPdfRecord } from "@/lib/exportStudentsPdf";
+import { exportStudentsExcel } from "@/lib/exportStudentsExcel";
+import { exportStudentsWord } from "@/lib/exportStudentsWord";
 import { exportStudentsZip } from "@/lib/exportStudentsZip";
-import { Archive, FileDown } from "lucide-react";
+import { Archive, ChevronDown, FileDown, FileSpreadsheet, FileText } from "lucide-react";
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover";
 
 type ListMeta = {
     total: number;
@@ -62,8 +70,11 @@ const Students = () => {
         totalPages: 1,
     });
     const [exporting, setExporting] = useState(false);
+    const [exportMenuOpen, setExportMenuOpen] = useState(false);
     const [downloading, setDownloading] = useState(false);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+    const [deleting, setDeleting] = useState(false);
 
     /** Keep page / limit / search / finger columns / batch in the URL so Back restores this list. */
     function setListParams(patch: {
@@ -172,26 +183,58 @@ const Students = () => {
         return () => window.removeEventListener("focus", onFocus);
     }, [fetchData]);
 
-    async function handleExportPdf() {
+    async function fetchAllStudentsForExport() {
+        const res = await Api.get("api/student", {
+            params: { all: true },
+            timeout: 180_000,
+        });
+        const allStudents = (res.data.data ?? []) as StudentPdfRecord[];
+        if (allStudents.length === 0) {
+            throw new Error("No students to export");
+        }
+        return allStudents;
+    }
+
+    async function handleExport(format: "pdf" | "excel" | "word") {
+        setExportMenuOpen(false);
         setExporting(true);
         try {
-            // Full list for this user (ignores current page/search).
-            const res = await Api.get("api/student", {
-                params: { all: true },
-                timeout: 180_000,
-            });
-            const allStudents = (res.data.data ?? []) as StudentPdfRecord[];
-            if (allStudents.length === 0) {
-                toast.error("No students to export");
-                return;
+            const allStudents = await fetchAllStudentsForExport();
+            if (format === "pdf") {
+                await exportStudentsPdf(allStudents);
+                toast.success("PDF downloaded");
+            } else if (format === "excel") {
+                await exportStudentsExcel(allStudents);
+                toast.success("Excel downloaded");
+            } else {
+                await exportStudentsWord(allStudents);
+                toast.success("Word downloaded");
             }
-            await exportStudentsPdf(allStudents);
-            toast.success("PDF downloaded");
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : "Export failed";
             toast.error(message);
         } finally {
             setExporting(false);
+        }
+    }
+
+    async function confirmDeleteStudent() {
+        if (!pendingDeleteId) return;
+        setDeleting(true);
+        try {
+            const res = await Api.delete(`api/student/${pendingDeleteId}`);
+            toast.success(res.data.message);
+            setSelectedIds((prev) => {
+                const next = new Set(prev);
+                next.delete(pendingDeleteId);
+                return next;
+            });
+            setPendingDeleteId(null);
+            await fetchData(true);
+        } catch (error: any) {
+            toast.error(error.response?.data?.message ?? "Delete failed");
+        } finally {
+            setDeleting(false);
         }
     }
 
@@ -306,25 +349,7 @@ const Students = () => {
                         )}
                         {canPerform(user, "delete") && (
                             <Badge
-                                onClick={async () => {
-                                    if (!window.confirm("Delete this student?")) return;
-                                    try {
-                                        const res = await Api.delete(
-                                            `api/student/${cell.row.original.id}`,
-                                        );
-                                        toast.success(res.data.message);
-                                        setSelectedIds((prev) => {
-                                            const next = new Set(prev);
-                                            next.delete(cell.row.original.id);
-                                            return next;
-                                        });
-                                        await fetchData(true);
-                                    } catch (error: any) {
-                                        toast.error(
-                                            error.response?.data?.message ?? "Delete failed",
-                                        );
-                                    }
-                                }}
+                                onClick={() => setPendingDeleteId(cell.row.original.id)}
                                 type={enums.RED}
                             >
                                 Delete
@@ -418,16 +443,49 @@ const Students = () => {
                                         : `Download (${selectedIds.size})`}
                                 </Button>
                             )}
-                            <Button
-                                type="button"
-                                variant="outline"
-                                className="w-full gap-2 sm:w-auto"
-                                disabled={exporting || meta.total === 0}
-                                onClick={handleExportPdf}
-                            >
-                                <FileDown className="h-4 w-4" />
-                                {exporting ? "Exporting…" : "Export PDF"}
-                            </Button>
+                            <Popover open={exportMenuOpen} onOpenChange={setExportMenuOpen}>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        className="w-full gap-1.5 sm:w-auto"
+                                        disabled={exporting || meta.total === 0}
+                                    >
+                                        <FileDown className="h-4 w-4" />
+                                        {exporting ? "Exporting…" : "Export"}
+                                        <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent align="end" className="w-44 p-1.5">
+                                    <button
+                                        type="button"
+                                        className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-100"
+                                        disabled={exporting}
+                                        onClick={() => handleExport("pdf")}
+                                    >
+                                        <FileText className="h-4 w-4" />
+                                        PDF
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-100"
+                                        disabled={exporting}
+                                        onClick={() => handleExport("excel")}
+                                    >
+                                        <FileSpreadsheet className="h-4 w-4" />
+                                        Excel
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-100"
+                                        disabled={exporting}
+                                        onClick={() => handleExport("word")}
+                                    >
+                                        <FileText className="h-4 w-4" />
+                                        Word
+                                    </button>
+                                </PopoverContent>
+                            </Popover>
                         </>
                     )}
                 </>
@@ -439,6 +497,14 @@ const Students = () => {
             dataName="students"
             data={news.data}
             columns={columns}
+        />
+        <ConfirmDialog
+            open={Boolean(pendingDeleteId)}
+            title="Delete student"
+            message="Delete this student and their fingerprint records?"
+            loading={deleting}
+            onCancel={() => !deleting && setPendingDeleteId(null)}
+            onConfirm={confirmDeleteStudent}
         />
         </>
     );

@@ -17,6 +17,7 @@ const AddStudent = lazy(() => import('@/pages/students/AddStudent'));
 const ViewStudent = lazy(() => import('@/pages/students/ViewStudent'));
 const Media = lazy(() => import('@/pages/Media'));
 const Users = lazy(() => import('@/pages/users/Users'));
+const ChangePassword = lazy(() => import('@/pages/ChangePassword'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
 
 function ProtectedRoutes() {
@@ -41,6 +42,7 @@ function AppRoutes() {
           element: <AppLayout />,
           children: [
             { path: '/', element: <Home /> },
+            { path: '/change-password', element: <ChangePassword /> },
             {
               element: <RoleRoutes roles={['MasterAdmin']} />,
               children: [{ path: '/users', element: <Users /> }],
