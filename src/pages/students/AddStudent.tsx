@@ -29,6 +29,42 @@ const initialState = {
 
 const fingerKeys = ['finger1', 'finger2', 'finger3', 'finger4', 'finger5'] as const;
 
+/** Gateway often kills long enhance (nginx ~60s). Retry same payload a few times. */
+const CREATE_MAX_ATTEMPTS = 3;
+const CREATE_RETRY_DELAY_MS = 2_000;
+
+function isGatewayTimeout(error: unknown): boolean {
+    const err = error as {
+        response?: { status?: number };
+        code?: string;
+        message?: string;
+    };
+    if (err.response?.status === 504) return true;
+    // Proxy may drop the connection with no status
+    if (err.code === 'ECONNABORTED') return true;
+    const msg = String(err.message ?? '').toLowerCase();
+    return msg.includes('timeout') || msg.includes('504');
+}
+
+async function createStudentWithRetry(values: typeof initialState) {
+    let lastError: unknown;
+    for (let attempt = 1; attempt <= CREATE_MAX_ATTEMPTS; attempt++) {
+        try {
+            return await Api.post(`api/student`, values, {
+                timeout: 180_000, // enhance all 5 fingers server-side
+            });
+        } catch (error) {
+            lastError = error;
+            if (!isGatewayTimeout(error) || attempt === CREATE_MAX_ATTEMPTS) {
+                throw error;
+            }
+            toast(`Gateway timeout — retrying (${attempt}/${CREATE_MAX_ATTEMPTS - 1})…`);
+            await new Promise((r) => setTimeout(r, CREATE_RETRY_DELAY_MS));
+        }
+    }
+    throw lastError;
+}
+
 const AddStudent = () => {
     const { event } = useParams()
     const navigate = useNavigate()
@@ -90,9 +126,7 @@ const AddStudent = () => {
                             const res = await Api.put(`api/student/${event}`, values);
                             toast.success(res.data.message);
                         } else {
-                            const res = await Api.post(`api/student`, values, {
-                                timeout: 180_000, // enhance all 5 fingers server-side
-                            });
+                            const res = await createStudentWithRetry(values);
                             toast.success(res.data.message);
                         }
                         navigate("/student")
