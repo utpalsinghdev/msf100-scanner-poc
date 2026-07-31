@@ -1,0 +1,15 @@
+services:
+  build-ui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: saispaces-ui-build
+    volumes:
+      # Copies the built static files straight into the folder your
+      # nginx server block already points to (root /var/www/html/saispaces_ui).
+      - /var/www/html/saispaces_ui:/output
+    entrypoint:
+      - sh
+      - -c
+      - "rm -rf /output/* && cp -r /out/dist/. /output/ && echo 'UI deployed to /var/www/html/saispaces_ui'"
+    # This is a one-shot job, not a long-running service — no restart policy.
