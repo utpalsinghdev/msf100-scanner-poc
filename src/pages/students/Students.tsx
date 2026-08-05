@@ -185,12 +185,19 @@ const Students = () => {
 
     async function fetchAllStudentsForExport() {
         const res = await Api.get("api/student", {
-            params: { all: true },
+            params: {
+                all: true,
+                batchId: batchId.trim() || undefined,
+            },
             timeout: 180_000,
         });
         const allStudents = (res.data.data ?? []) as StudentPdfRecord[];
         if (allStudents.length === 0) {
-            throw new Error("No students to export");
+            throw new Error(
+                batchId.trim()
+                    ? "No students in this batch to export"
+                    : "No students to export",
+            );
         }
         return allStudents;
     }
